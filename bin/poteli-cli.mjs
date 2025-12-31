@@ -1,5 +1,5 @@
 import esbuild from 'esbuild';
-import teli from '../dist/index-esbuild.js';
+import poteli from '../dist/index-esbuild.js';
 
 /**
  * CLI Argument Parsing
@@ -48,7 +48,7 @@ try {
     format: 'esm',
     platform: 'browser',
     target: 'es2018',
-    plugins: [teli()],
+    plugins: [poteli()],
     jsx: 'preserve',
     sourcemap: sourcemap,
     minify: minify,
