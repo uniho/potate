@@ -429,12 +429,7 @@ export function useContext(Context: ContextType): any {
 /**
  * Transition hook
  */
-export function useTransition(options): UseTransitionResult {
-  /**
-   * Set default timeout to 3000ms if not specified.
-   * This ensures a consistent UX and acts as a safety net for pending states.
-   */
-  const timeoutMs = (options && options.timeoutMs !== undefined) ? options.timeoutMs : 3000;
+export function useTransition(): UseTransitionResult {
   const component = getCurrentComponent();
 
   return getHook(
@@ -490,14 +485,6 @@ export function useTransition(options): UseTransitionResult {
           if (root.lastDeferredCompleteTime < root.deferredUpdateTime) {
             hook.updatePendingState(true, initialUpdateSource);
           }
-
-          /**
-           * Set a timeout which set's the is pending to false and then triggers a deferred update
-           */
-          hook.transitionTimeout = setTimeout(() => {
-            hook.transitionState = TRANSITION_STATE_TIMED_OUT;
-            hook.updatePendingState(false, UPDATE_SOURCE_TRANSITION);
-          }, timeoutMs);
         },
       };
 
