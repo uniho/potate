@@ -435,7 +435,8 @@ export function useTransition(options): UseTransitionResult {
    * Set default timeout to 3000ms if not specified.
    * This ensures a consistent UX and acts as a safety net for pending states.
    */
-  const timeoutMs = (options && options.timeoutMs !== undefined) ? options.timeoutMs : 3000;  const component = getCurrentComponent();
+  const timeoutMs = (options && options.timeoutMs !== undefined) ? options.timeoutMs : 3000;
+  const component = getCurrentComponent();
 
   return getHook(
     () => {
