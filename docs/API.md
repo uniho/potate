@@ -1,12 +1,12 @@
 
-# POTELI API Documentation
+# Potate API Documentation
 
 ## `watch(resource)`
 
 The `watch(resource)` API connects your component to a shared resource and manages the **Suspense** lifecycle. It can be called inside `if` statements, `for` loops, or after early returns.
 
 ```javascript
-import { Suspense, watch, initWatch } from 'poteli'
+import { Suspense, watch, initWatch } from 'potate'
 import { myStore } from './my-store'
 
 export props => {
