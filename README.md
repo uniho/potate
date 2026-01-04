@@ -194,7 +194,7 @@ For the above example, the Brahmos output is 685 bytes, compared to 824 bytes fr
 - [ ] Performance improvement
 - [ ] Bug fixes
 - [ ] Test Cases
-- [ ] Rewrite core source code with MoonBit
+- [ ] Rewrite core source code with [MoonBit](https://www.moonbitlang.com/)
 
 
 ## Out of Scope
