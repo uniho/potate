@@ -14,6 +14,7 @@ import {
   EFFECT_TYPE_OTHER,
   UPDATE_TYPE_SYNC,
   UPDATE_SOURCE_IMMEDIATE_ACTION,
+  TRANSITION_STATE_SUSPENDED,
 } from './configs';
 
 import processComponentFiber from './processComponentFiber';
@@ -213,12 +214,21 @@ export default function workLoop(fiber: Fiber, topFiber: Fiber | HostFiber) {
     root.callRenderCallbacks();
 
     if (currentTransition) {
-      // set transition complete if it is not on suspended or timed out state
-      setTransitionComplete(currentTransition);
+      /**
+       * Only finalize the transition if the traversal reached the top fiber 
+       * and it is not currently blocked by a suspended state.
+       */
+      const isFullyProcessed = fiber === topFiber && !root.retryFiber;
+      const isNotSuspended = currentTransition.transitionState !== TRANSITION_STATE_SUSPENDED;
 
-      // reset try count
-      currentTransition.tryCount = 0;
+      if (isFullyProcessed && isNotSuspended) {
+        // set transition complete if it is not on suspended or timed out state
+        setTransitionComplete(currentTransition);
 
+        // reset try count
+        currentTransition.tryCount = 0;
+      }
+  
       /**
        * if transition is completed and it does not have any effect to commit, we should remove the
        * transition from pending transition
