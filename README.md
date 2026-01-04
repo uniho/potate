@@ -104,10 +104,10 @@ npx potate src/entry-point.js --outdir dist
 ```
 
 ## Usage
-The API is exact same as React so build how you build application with React, but instead of importing from `react` or `react-dom` import from `brahmos`;
+The API is exact same as React so build how you build application with React, but instead of importing from `react` or `react-dom` import from `potate`;
 
 ```js
-import {useState, useEffect} from 'brahmos';
+import {useState, useEffect} from 'potate';
 
 export default function App(props) {
   const [state, setState] = useState(0);
@@ -128,17 +128,11 @@ Just alias react and react-dom with brahmos. And you are good to go using 3rd pa
 You need to add following aliases.
 ```js
 alias: {
-  react: 'brahmos',
-  'react-dom': 'brahmos',
-  'react/jsx-runtime': 'brahmos'
+  react: 'potate',
+  'react-dom': 'potate',
+  'react/jsx-runtime': 'potate'
 },
 ```
-
--  **webpack** ([https://webpack.js.org/configuration/resolve/#resolvealias](https://webpack.js.org/configuration/resolve/#resolvealias))
-- **parcel** ([https://parceljs.org/module_resolution.html#aliases](https://parceljs.org/module_resolution.html#aliases))
-- **rollup** ([https://www.npmjs.com/package/@rollup/plugin-alias](https://www.npmjs.com/package/@rollup/plugin-alias))
-- **babel** ([https://www.npmjs.com/package/babel-plugin-module-resolver](https://www.npmjs.com/package/babel-plugin-module-resolver))
-
 
 ## Idea
 
@@ -250,10 +244,15 @@ For the above example, the Brahmos output is 685 bytes, compared to 824 bytes fr
 - [x] `use(resource)` API
 - [x] `watch(resource)` API
 - [ ] `use(context)` API
+- [ ] `use(store)` API
 - [ ] Support for `ref` as a prop
 - [ ] Cleanup functions for refs
-- [ ] `<Context>` as a provider 
+- [ ] `<Context>` as a provider
+- [ ] `createRoot(...)` 
 - [ ] `startTransition(action)` for POST request.
+- [ ] `useEffectEvent` hook
+- [ ] `useImperativeHandle` hook
+- [ ] `useInsertionEffect` hook
 - [ ] Performance improvement
 - [ ] Bug fixes
 - [ ] Test Cases
@@ -266,5 +265,6 @@ For the above example, the Brahmos output is 685 bytes, compared to 824 bytes fr
 
 * Potate Server Components (PSC)
 * Potate Compiler
+* `useSyncExternalStore` hook
 * `useOptimistic` hook
 * Type definitions/Type safety: We do not prioritize or provide type information unless it directly impacts runtime execution safety.
