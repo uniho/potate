@@ -4,7 +4,7 @@ import { getCurrentComponentFiber } from './fiber';
 /**
  * Subroutine: Handling Promise (Resource)
  */
-function handlePromise(promise: any): any {
+export function handlePromise(promise: any): any {
   if (promise.status === 'fulfilled') return promise.value;
   if (promise.status === 'rejected') throw promise.reason;
   if (promise.status === 'pending') throw promise;
