@@ -181,6 +181,7 @@ For the above example, the Brahmos output is 685 bytes, compared to 824 bytes fr
 - [x] React Utilities and Methods
 - [x] Vite Plugin to transpile JSX to tagged templates
 - [x] Esbuild Plugin to transpile JSX to tagged templates
+- [x] The Lanes Light
 - [x] Enhanced `useTransition` hook
 - [x] Enhanced `useDeferredValue` hook
 - [x] `use(resource)` API
