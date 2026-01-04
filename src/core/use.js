@@ -4,7 +4,7 @@ import { getCurrentComponentFiber } from './fiber';
 /**
  * Subroutine: Handling Promise (Resource)
  */
-export function handlePromise(promise: any): any {
+export function handlePromise(promise) {
   if (promise.status === 'fulfilled') return promise.value;
   if (promise.status === 'rejected') throw promise.reason;
   if (promise.status === 'pending') throw promise;
@@ -12,11 +12,11 @@ export function handlePromise(promise: any): any {
   // Initial execution: Inject state and suspend
   promise.status = 'pending';
   promise.then(
-    (res: any) => {
+    (res) => {
       promise.status = 'fulfilled';
       promise.value = res;
     },
-    (err: any) => {
+    (err) => {
       promise.status = 'rejected';
       promise.reason = err;
     }
@@ -28,7 +28,7 @@ export function handlePromise(promise: any): any {
  * The use() API
  * Handles asynchronous resources (Suspense).
  */
-export function use(usable: any): any {
+export function use(usable) {
   const fiber = getCurrentComponentFiber();
   if (!fiber) throw new Error('use() must be called during render.');
 
