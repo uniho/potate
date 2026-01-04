@@ -505,9 +505,16 @@ export function useTransition(): UseTransitionResult {
 /**
  * A hook to have deferred value
  */
-export function useDeferredValue(value: any): any {
+export function useDeferredValue(value: any, initialValue?: any): any {
+  /**
+   * Initialize the state with initialValue if provided (React 19 style),
+   * otherwise fall back to the current value.
+   */
+  const [deferredValue, setDeferredValue] = useState(
+    initialValue !== undefined ? initialValue : value
+  );
+
   const [, startTransition] = useTransition();
-  const [deferredValue, setDeferredValue] = useState(value);
 
   useEffect(() => {
     startTransition(() => {

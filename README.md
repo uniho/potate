@@ -183,7 +183,6 @@ For the above example, the Brahmos output is 685 bytes, compared to 824 bytes fr
 - [x] Esbuild Plugin to transpile JSX to tagged templates
 - [x] Enhanced `useTransition` hook
 - [x] Enhanced `useDeferredValue` hook
-  *(Note: Currently seeking to add support for initial values)*
 - [x] `use(resource)` API
 - [x] `watch(resource)` API
 - [ ] `use(context)` API
