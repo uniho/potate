@@ -62,9 +62,9 @@ import {createStore, atom} from "jotai"
 // including the freedom to name this as you wish — such as a 'signal'.
 const createSignal = initValue => {
   const _store = createStore()
-  const _atom = atom(initValue)
-  const f = () => _store.get(_atom)
-  f.set = newValue => _store.set(_atom, newValue)
+  const _atom = atom({v: initValue})
+  const f = () => _store.get(_atom).v
+  f.set = newValue => _store.set(_atom, {v: newValue})
   f.sub = listener => _store.sub(_atom, listener)
   f.atom = _atom
   return f
