@@ -242,9 +242,26 @@ export default function workLoop(fiber: Fiber, topFiber: Fiber | HostFiber) {
       avoidInlineCommitChange.fn(root);
     }
 
-    // check if there are any pending transition, if yes try rendering them
-    if (getFirstTransitionToProcess(root)) {
+    // // check if there are any pending transition, if yes try rendering them
+    // if (getFirstTransitionToProcess(root)) {
+    //   withUpdateSource(UPDATE_SOURCE_TRANSITION, () => {
+    //     root.updateSource = UPDATE_SOURCE_TRANSITION;
+    //     doDeferredProcessing(root);
+    //   });
+    // }
+
+    /**
+     * Check if there are any pending or interrupted transitions.
+     * If yes, re-schedule the background rendering to continue in the next idle period.
+     */
+    const pendingTransition = getFirstTransitionToProcess(root);
+
+    if (pendingTransition) {
       withUpdateSource(UPDATE_SOURCE_TRANSITION, () => {
+        /**
+         * Mark the update source as transition and initiate deferred processing.
+         * This ensures that the remaining work is picked up without blocking the main thread.
+         */
         root.updateSource = UPDATE_SOURCE_TRANSITION;
         doDeferredProcessing(root);
       });
@@ -252,25 +269,49 @@ export default function workLoop(fiber: Fiber, topFiber: Fiber | HostFiber) {
   });
 }
 
-export function doDeferredProcessing(root: HostFiber) {
-  // if there is no deferred work or pending transition return
-  const pendingTransition = getFirstTransitionToProcess(root);
+// export function doDeferredProcessing(root: HostFiber) {
+//   // if there is no deferred work or pending transition return
+//   const pendingTransition = getFirstTransitionToProcess(root);
 
+//   if (!pendingTransition) return;
+
+//   root.updateType = UPDATE_TYPE_DEFERRED;
+
+//   // reset the effect list before starting new one
+//   resetEffectProperties(root);
+
+//   // set the pending transition as current transition
+//   root.currentTransition = pendingTransition;
+
+//   pendingTransition.tryCount += 1;
+
+//   // $FlowFixMe: Passing root on top level component is exception
+//   root.wip = cloneCurrentFiber(root.current, root.wip, root, root);
+
+//   workLoop(root.wip, root);
+// }
+
+export function doDeferredProcessing(root: HostFiber) {
+  const pendingTransition = getFirstTransitionToProcess(root);
   if (!pendingTransition) return;
 
   root.updateType = UPDATE_TYPE_DEFERRED;
-
-  // reset the effect list before starting new one
+  
+  // Reset the effect list to start a fresh collection for this render pass
   resetEffectProperties(root);
 
-  // set the pending transition as current transition
   root.currentTransition = pendingTransition;
-
   pendingTransition.tryCount += 1;
 
-  // $FlowFixMe: Passing root on top level component is exception
+  /**
+   * IMPORTANT: Reuse the existing root.wip if it exists.
+   * cloneCurrentFiber [3] is designed to take the current wip as the second 
+   * argument and "reuse" it instead of creating a new object.
+   * This allows us to keep the progress made in previous frames.
+   */
   root.wip = cloneCurrentFiber(root.current, root.wip, root, root);
-
+  
+  // Restart the workLoop with the WIP fiber
   workLoop(root.wip, root);
 }
 
