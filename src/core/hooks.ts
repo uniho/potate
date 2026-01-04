@@ -505,30 +505,9 @@ export function useTransition(): UseTransitionResult {
 /**
  * A hook to have deferred value
  */
-export function useDeferredValue(value: any, options): any {
-  const timeoutMs = (options && options.timeoutMs !== undefined) ? options.timeoutMs : 3000;
-  const [, startTransition] = useTransition({ timeoutMs });
+export function useDeferredValue(value: any): any {
+  const [, startTransition] = useTransition();
   const [deferredValue, setDeferredValue] = useState(value);
-  const timeStampRef = useRef(0);
-
-  /**
-   * If there is a timestamp that denotes the timestamp form where the data
-   * went stale, timestamp 0 means the data is not stale.
-   */
-  const { current: staleTime } = timeStampRef;
-  const currentTime = timestamp();
-
-  if (value === deferredValue) {
-    // if value is not stale reset timestamp
-    timeStampRef.current = 0;
-  } else if (staleTime === 0) {
-    // if the value just got stale mark the stale time
-    timeStampRef.current = currentTime;
-  } else if (currentTime > staleTime + timeoutMs) {
-    // when ever the stale data times out update the deferred value
-    timeStampRef.current = 0;
-    setDeferredValue(value);
-  }
 
   useEffect(() => {
     startTransition(() => {
