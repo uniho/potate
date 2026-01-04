@@ -188,6 +188,7 @@ For the above example, the Brahmos output is 685 bytes, compared to 824 bytes fr
 - [ ] `use(context)` API
 - [ ] Support for `ref` as a prop
 - [ ] Cleanup functions for refs
+- [ ] `<Context>` as a provider 
 - [ ] `startTransition(action)` for POST request.
 - [ ] Performance improvement
 - [ ] Bug fixes
