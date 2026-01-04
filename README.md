@@ -6,12 +6,11 @@
 
 **Po**wered by **Ta**gged **Te**mplate.
 
+> **Note**: This project is a fork of [brahmosjs/brahmos](https://github.com/brahmosjs/brahmos), extending its capabilities with a custom fiber architecture and enhanced concurrent features.
+
 Supercharged JavaScript library to build user interfaces with modern React API and native templates.
 
 Potate supports all the APIs of React including the upcoming concurrent mode APIs and the existing ones. It has its own custom fiber architecture and concurrent mode implementation to support the concurrent UI patterns.
-
-forked from [brahmosjs/brahmos](https://github.com/brahmosjs/brahmos)
-
 
 ## Features
 
