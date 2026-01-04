@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import esbuild from 'esbuild';
 import potate from '../dist/index-esbuild.js';
 

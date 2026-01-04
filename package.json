@@ -20,6 +20,10 @@
       "import": "./dist/index-esbuild.js"
     }
   },
+
+  "bin": {
+    "potate": "./bin/potate-cli.mjs"
+  },
   "scripts": {
     "build": "node ./scripts/build-core.mjs && node ./scripts/build-plugin.mjs",
     "prepublishOnly": "npm run build"
