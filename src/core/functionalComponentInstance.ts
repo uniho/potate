@@ -1,4 +1,5 @@
-// @flow
+// src/core/functionalComponentInstance.ts
+
 import { prepareHooksForRender } from './hooks';
 import { BRAHMOS_DATA_KEY } from './configs';
 import type { FunctionalComponentInstance, ObjectLiteral } from './flow.types';
