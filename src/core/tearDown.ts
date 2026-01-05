@@ -66,10 +66,8 @@ function tearDownFiber(fiber, removeDOM) {
   else if (isComponentNode(node) && isMounted(nodeInstance)) {
 
     // extended unmount logic.
-    if (nodeInstance.__unmount) {
-      nodeInstance.__unmount.forEach(finalize => finalize());
-      nodeInstance.__unmount.clear();
-    }
+    nodeInstance.__unmount.forEach(finalize => finalize());
+    nodeInstance.__unmount.clear();
 
     if (node.nodeType === CLASS_COMPONENT_NODE) {
       callLifeCycle(nodeInstance, 'componentWillUnmount');

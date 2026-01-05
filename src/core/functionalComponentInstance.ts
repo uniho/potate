@@ -19,6 +19,10 @@ export default function functionalComponentInstance(
       this[BRAHMOS_DATA_KEY].nodes = nodes;
       return nodes;
     },
+    
+    // extended unmount logic.
+    __unmount: new Map(),
+    
     // keep the dynamic attributes on last so it's transpiled in compact way
     [BRAHMOS_DATA_KEY]: {
       pendingSyncUpdates: [],

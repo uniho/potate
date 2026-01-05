@@ -22,30 +22,28 @@ export function initWatch(sub) {
     listeners.forEach((l) => l(val));
   });
 
-  /**
-   * Smart Finalizer:
-   * Only executes the actual destruction when no subscribers are left.
-   */
-  promise._finalize = (listenerToRemove) => {
-    if (listenerToRemove) {
-      listeners.delete(listenerToRemove);
-    }
-    
-    // Physical guard: Prevent premature teardown of shared resources.
-    if (listeners.size === 0 && unsub) {
-      unsub();
-    }
-  };
+  promise._watch = {
+    /**
+     * Smart Finalizer:
+     * Only executes the actual destruction when no subscribers are left.
+     */
+    unsubscribe: l => {
+      if (l) {
+        listeners.delete(l);
+      }
+      
+      // Physical guard: Prevent premature teardown of shared resources.
+      if (listeners.size === 0 && unsub) {
+        unsub();
+      }
+    },
 
-  /**
-   * Subscribe method:
-   * Connects a component instance to the resource.
-   */
-  promise._subscribe = (l) => {
-    listeners.add(l);
-    // Returns a closure that calls the smart finalizer for this specific listener.
-    return () => promise._finalize(l);
-  };
+    /**
+     * Subscribe method:
+     * Connects a component instance to the resource.
+     */
+    subscribe: l => listeners.add(l),
+  }
 
   return promise;
 }
@@ -73,7 +71,7 @@ function watchBase(usable, option = {}) {
      * Register the instance to the engine's observer system.
      * The 'use resource' pattern ensures that new promises are handled correctly.
      */
-    if (usable._subscribe && !inst.__unmount?.has(usable)) {
+    if (usable._watch && !inst.__unmount?.has(usable)) {
       const listener = () => {
         const latestFiber = getFiberFromComponent(inst);
         if (latestFiber) {
@@ -91,14 +89,11 @@ function watchBase(usable, option = {}) {
       };
 
       // Obtain the instance-specific unsubscription function.
-      const unsubscribe = usable._subscribe(listener);
+      usable._watch.subscribe(listener);
 
       // Store the unmount logic.
       // See tearDownFiber() in tearDown.js if you want to use this unmount logic.
-      if (!inst.__unmount) {
-        inst.__unmount = new Map();
-      }
-      inst.__unmount.set(usable, unsubscribe);
+      inst.__unmount.set(usable, () => usable._watch.unsubscribe(listener));
     }
 
     // Delegate to handlePromise to manage the Suspense lifecycle.
