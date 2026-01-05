@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/potate.svg" alt="potate" width="250">
+  <img src="https://raw.githubusercontent.com/uniho/potate/main/assets/potate.svg" alt="potate" width="250">
 </p>
 
 # Potate
