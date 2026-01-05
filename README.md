@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://unpkg.com/brahmos@0.5.0/brahmos.svg" alt="Brahmos.js" width="250">
+  <img src="assets/potate.svg" alt="potate" width="250">
 </p>
 
 # Potate
