@@ -99,6 +99,7 @@ export {
 };
 
 export {use} from './use';
+export {startTransition} from './hooks';
 
 /** Export transforms */
 export const jsx = createBrahmosNode;

@@ -24,6 +24,7 @@ import {
 } from './updateUtils';
 
 import { getFiberFromComponent, getCurrentComponentFiber } from './fiber';
+import { PREDEFINED_TRANSITION_DEFERRED } from './transitionUtils';
 
 import type {
   Fiber,
@@ -416,6 +417,19 @@ export function useContext(Context: ContextType): any {
   component.context = value;
 
   return value;
+}
+
+/**
+ * Standalone startTransition
+ * Uses the predefined deferred transition to ensure the engine 
+ * tracks this update correctly in the pending list.
+ */
+export function startTransition(callback: Function) {
+  /**
+   * withTransition internally sets the update source to 
+   * UPDATE_SOURCE_TRANSITION and associates it with the given transition object.
+   */
+  withTransition(PREDEFINED_TRANSITION_DEFERRED, callback);
 }
 
 /**
