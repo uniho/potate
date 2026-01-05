@@ -23,7 +23,7 @@ Potate supports all the APIs of React including the upcoming concurrent mode API
 
 ### Vite
 
-Create your new app with "select a framework: > Vanilla".
+Create your new app with `select a framework: > Vanilla`.
 
 ``` bash
 npm create vite@latest my-app
