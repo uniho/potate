@@ -1,33 +1,30 @@
 {
   "name": "potate",
-  "version": "0.11.1",
+  "version": "0.12.0",
   "description": "Super charged UI library with modern React API and native templates.",
   "author": "uniho",
   "license": "MIT",
   "type": "module",
-
   "files": [
     "dist/",
     "bin/",
     "README.md",
     "LICENSE"
   ],
-
   "exports": {
     ".": {
       "types": "./dist/type.d.ts",
-      "import": "./dist/index.js"  
+      "import": "./dist/index.js"
     },
     "./vite": {
       "types": "./dist/type.d.ts",
-      "import": "./dist/index-vite.js"  
+      "import": "./dist/index-vite.js"
     },
     "./esbuild": {
       "types": "./dist/type.d.ts",
       "import": "./dist/index-esbuild.js"
     }
   },
-
   "bin": {
     "potate": "./bin/potate-cli.mjs"
   },
@@ -35,7 +32,6 @@
     "build": "node ./scripts/build-core.mjs && node ./scripts/build-plugin.mjs",
     "prepublishOnly": "npm run build"
   },
-
   "repository": {
     "type": "git",
     "url": "https://github.com/uniho/potate"
