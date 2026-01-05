@@ -98,6 +98,7 @@ export {
   Fragment,
 };
 
+export {createRoot} from './root'
 export {use} from './use';
 export {startTransition} from './hooks';
 

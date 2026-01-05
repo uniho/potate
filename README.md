@@ -72,7 +72,8 @@ const App = props => {
   )
 }
 
-Potate.render(Potate.createElement(App), document.querySelector('#app'))
+const root = Potate.createRoot(document.querySelector('#app'))
+root.render(Potate.createElement(App)) // ✖ root.render(<App/>) Avoid JSX at the root
 
 ```
 
@@ -244,12 +245,12 @@ For the above example, the Brahmos output is 685 bytes, compared to 824 bytes fr
 - [x] Enhanced `useDeferredValue` hook
 - [x] `use(resource)` API
 - [x] `watch(resource)` API
+- [x] Provides React 19 style root management.
 - [ ] `use(context)` API
 - [ ] `use(store)` API
 - [ ] Support for `ref` as a prop
 - [ ] Cleanup functions for refs
 - [ ] `<Context>` as a provider
-- [ ] `createRoot(...)` 
 - [ ] `startTransition(action)` for POST request.
 - [ ] `useEffectEvent` hook
 - [ ] `useImperativeHandle` hook
