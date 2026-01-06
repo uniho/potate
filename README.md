@@ -140,13 +140,39 @@ root.render(Potate.createElement(App)) // ✖ root.render(<App/>) Please avoid J
 Just alias react and react-dom with potatejs. And you are good to go using 3rd party react libraries.
 
 You need to add following aliases.
+
 ```js
-alias: {
-  react: 'potatejs',
-  'react-dom': 'potatejs',
-  'react/jsx-runtime': 'potatejs'
-},
+// vite.config.ts
+export default defineConfig({
+
+  resolve: {
+    alias: {
+      'react': 'potatejs',
+      'react-dom': 'potatejs',
+      'react/jsx-runtime': 'potatejs',
+    },
+  },
+
+});
+
 ```
+
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+
+    "paths": {
+      "react": ["./node_modules/potatejs"],
+      "react-dom": ["./node_modules/potatejs"],
+      "react/jsx-runtime": ["./node_modules/potatejs"],
+    },
+
+  }
+}
+
+```
+
 
 ## Idea
 
