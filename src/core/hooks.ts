@@ -420,16 +420,32 @@ export function useContext(Context: ContextType): any {
 }
 
 /**
- * Standalone startTransition
- * Uses the predefined deferred transition to ensure the engine 
- * tracks this update correctly in the pending list.
+ * Standalone startTransition API
+ * Start a transition in any context without using hooks.
  */
 export function startTransition(callback: Function) {
+  const transitionConfig = {
+    // Unique ID to identify the transition
+    transitionId: getUniqueId(),
+    
+    // Set the initial status to start
+    transitionState: TRANSITION_STATE_START,
+    
+    /**
+     * The engine's handleSuspender requires this array to track suspended Promises.
+     * Without this, calling .includes() will cause a TypeError.
+     */
+    pendingSuspense: [],
+
+    // Optional properties for future extensions
+    tryCount: 0,
+  };
+
   /**
-   * withTransition internally sets the update source to 
-   * UPDATE_SOURCE_TRANSITION and associates it with the given transition object.
+   * Execute the callback within the global transition context.
+   * This allows state updates (like setState) within the scope to inherit this transitionId.
    */
-  withTransition(PREDEFINED_TRANSITION_DEFERRED, callback);
+  withTransition(transitionConfig, callback);
 }
 
 /**
