@@ -76,7 +76,7 @@ const App = props => {
 }
 
 const root = Potate.createRoot(document.querySelector('#app'))
-root.render(Potate.createElement(App)) // ✖ root.render(<App/>) Please avoid JSX at the root
+root.render(<App/>)
 
 ```
 
@@ -130,7 +130,7 @@ export default function App(props) {
 }
 
 const root = Potate.createRoot(document.querySelector('#app'))
-root.render(Potate.createElement(App)) // ✖ root.render(<App/>) Please avoid JSX at the root
+root.render(<App/>)
 
 ```
 
