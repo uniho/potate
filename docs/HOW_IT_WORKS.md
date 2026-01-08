@@ -1,4 +1,6 @@
-<h2> ⚠️ Warning: This document is stale, a lot has been changed since this doc was published. This need's to be updated. </h2>
+Excerpt from [brahmosjs/brahmos](https://github.com/brahmosjs/brahmos):
+
+## ⚠️ Warning: This document is stale, a lot has been changed since this doc was published. This need's to be updated.
 
 This document is to explain how Brahmos work, its concept, internals and taxonomies. This is a good place for the contributors and people who want to understand the inner working of the Brahmos.
 
