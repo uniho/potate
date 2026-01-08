@@ -13,6 +13,20 @@ import type { BrahmosNode, Ref } from './flow.types';
 type Configs = { key: string, ref: Ref, children: any };
 
 export function createBrahmosNode(element: string | Function, props: Configs, key: string) {
+  if (!element || (typeof element !== 'string' && typeof element !== 'function')) {
+    let msg =
+      'Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: ' +
+      (element === null ? 'null' : typeof element) +
+      '.';
+
+    if (typeof element === 'undefined' || (typeof element === 'object' && element !== null)) {
+      msg +=
+        "\n\nYou likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.";
+    }
+
+    throw new Error(msg);
+  }
+
   const { ref } = props;
 
   // There can be chances key might be in props, if key is not passed as arg try to find it in props
