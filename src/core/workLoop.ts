@@ -1,3 +1,4 @@
+// core/workLoop.ts
 
 import {
   isComponentNode,
@@ -116,7 +117,8 @@ function shouldCommit(root) {
     return (
       root.lastCompleteTime >= root.updateTime &&
       root.hasUncommittedEffect &&
-      isTransitionCompleted(root.currentTransition)
+      (isTransitionCompleted(root.currentTransition) ||
+        root.currentTransition.isRunningAsyncAction)
     );
   }
 
@@ -220,8 +222,9 @@ export default function workLoop(fiber: Fiber, topFiber: Fiber | HostFiber) {
        */
       const isFullyProcessed = fiber === topFiber && !root.retryFiber;
       const isNotSuspended = currentTransition.transitionState !== TRANSITION_STATE_SUSPENDED;
+      const isRunningAsyncAction = (currentTransition as any).isRunningAsyncAction;
 
-      if (isFullyProcessed && isNotSuspended) {
+      if (isFullyProcessed && isNotSuspended && !isRunningAsyncAction) {
         // set transition complete if it is not on suspended or timed out state
         setTransitionComplete(currentTransition);
 
@@ -233,7 +236,10 @@ export default function workLoop(fiber: Fiber, topFiber: Fiber | HostFiber) {
        * if transition is completed and it does not have any effect to commit, we should remove the
        * transition from pending transition
        */
-      if (!root.hasUncommittedEffect && isTransitionCompleted(currentTransition)) {
+      if (
+        !root.hasUncommittedEffect &&
+        (isTransitionCompleted(currentTransition) || isRunningAsyncAction)
+      ) {
         removeTransitionFromRoot(root);
       }
     }

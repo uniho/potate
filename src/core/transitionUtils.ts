@@ -1,3 +1,4 @@
+// core/transitionUtils.ts
 
 import { getUniqueId } from './utils';
 import {
@@ -64,7 +65,7 @@ export function setTransitionComplete(transition: AnyTransition): void {
      * and then on next render cycle mark transition as completed
      * so that isPending and transition changes can be shown on one commit phase
      */
-    if (transition.isPending) {
+    if (transition.isPending && !transition.isRunningAsyncAction) {
       transition.clearTimeout();
       transition.updatePendingState(false, UPDATE_SOURCE_TRANSITION);
     } else {

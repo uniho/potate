@@ -1,4 +1,4 @@
-// src/core/hooks.ts
+// core/hooks.ts
 
 import reRender from './reRender';
 import { getConsumerCallback } from './createContext';
@@ -123,12 +123,21 @@ function isDependenciesChanged(deps, oldDeps) {
 /**
  * Function to rerender component if state is changed
  */
-function reRenderComponentIfRequired(component, state, lastState) {
+function reRenderComponentIfRequired(component, param, lastState) {
+  const isFunctionUpdate = typeof param === 'function';
+
   /**
    * check if state are different before rerendering, for seState triggered by event
    * we should always reRerender as event can have some side effects which are controlled
+   *
+   * Also if the update is a function, we cannot know the result beforehand,
+   * so we should always re-render, which is how React works.
    */
-  if (getCurrentUpdateSource() === UPDATE_SOURCE_IMMEDIATE_ACTION || !Object.is(state, lastState)) {
+  if (
+    getCurrentUpdateSource() === UPDATE_SOURCE_IMMEDIATE_ACTION ||
+    isFunctionUpdate ||
+    !Object.is(param, lastState)
+  ) {
     reRender(component);
   }
 }
@@ -216,23 +225,22 @@ function useStateBase(
           const currentHook = getCurrentHook(UPDATE_TYPE_SYNC, hookIndex, component);
 
           const lastState = currentHook[0];
-          const state = getNewState(param, lastState);
 
           const shouldRerender = guardedSetState(component, (transitionId) => ({
             transitionId,
             updater() {
               /**
-               * get the hook again inside, as the reference of currentHook might change
+               * Get the hook again inside, as the reference of currentHook might change
                * if we clone sync hook to deferred hook
                */
               const stateHook = getCurrentHook(updateType, hookIndex, component);
 
-              // call getNewState again as currentHook[0] might change if there are multiple setState
-              stateHook[0] = getNewState(param, currentHook[0]);
+              // The updater is now the only place where getNewState is called.
+              stateHook[0] = getNewState(param, stateHook[0]);
             },
           }));
 
-          if (shouldRerender) reRenderComponentIfRequired(component, state, lastState);
+          if (shouldRerender) reRenderComponentIfRequired(component, param, lastState);
         },
       ];
 
@@ -498,13 +506,39 @@ export function useTransition(): UseTransitionResult {
           hook.clearTimeout();
 
           // set the transitionId globally so that state updates can get the transition id
-          withTransition(hook, cb);
+          let result;
+          withTransition(hook, () => {
+            result = cb();
+          });
 
           /**
            * If cb does not have any setState, we don't have to unnecessary
            * set isPending flag, transitionState and trigger reRender.
            */
-          if (root.lastDeferredCompleteTime < root.deferredUpdateTime) {
+          const hasSyncUpdates = root.lastDeferredCompleteTime < root.deferredUpdateTime;
+
+          if (result && typeof result.then === 'function') {
+            hook.asyncActionCount = (hook.asyncActionCount || 0) + 1;
+            hook.isRunningAsyncAction = true;
+            hook.updatePendingState(true, initialUpdateSource);
+            result.then(
+              () => {
+                hook.asyncActionCount--;
+                if (hook.asyncActionCount === 0) {
+                  hook.isRunningAsyncAction = false;
+                  hook.updatePendingState(false, initialUpdateSource);
+                }
+              },
+              (error) => {
+                hook.asyncActionCount--;
+                if (hook.asyncActionCount === 0) {
+                  hook.isRunningAsyncAction = false;
+                  hook.updatePendingState(false, initialUpdateSource);
+                }
+                console.error('Uncaught error in transition:', error);
+              },
+            );
+          } else if (hasSyncUpdates) {
             hook.updatePendingState(true, initialUpdateSource);
           }
         },

@@ -1,4 +1,5 @@
-// @flow
+// core/updateUtils.ts
+
 import { afterCurrentStack } from './utils';
 import {
   PREDEFINED_TRANSITION_SYNC,
@@ -81,7 +82,15 @@ export function withTransition(transition: AnyTransition, cb: Function): void {
 
 export function shouldPreventSchedule(root: HostFiber): boolean {
   // it should prevent scheduling if immediate update is required
-  return root.updateSource === UPDATE_SOURCE_IMMEDIATE_ACTION;
+  const isAsyncTransition =
+    root.currentTransition && (root.currentTransition as any).isRunningAsyncAction;
+
+  /**
+   * If it's an immediate action (like a sync event) OR it's an optimistic update
+   * inside an async transition, we should flush the update synchronously
+   * without yielding to the scheduler.
+   */
+  return root.updateSource === UPDATE_SOURCE_IMMEDIATE_ACTION || !!isAsyncTransition;
 }
 
 export function isDeferredUpdate(): boolean {

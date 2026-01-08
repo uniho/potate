@@ -101,6 +101,8 @@ export type Transition = {|
   transitionTimeout: ?TimeoutID,
   transitionState: TransitionState,
   isPending: boolean,
+  isRunningAsyncAction?: boolean,
+  asyncActionCount?: number,
   // eslint-disable-next-line no-use-before-define
   pendingSuspense: Array<SuspenseInstance>,
   clearTimeout: () => void,
