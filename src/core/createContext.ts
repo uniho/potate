@@ -1,4 +1,5 @@
-// @flow
+// core/createContext.ts
+
 import { Component } from './circularDep';
 import { BRAHMOS_DATA_KEY } from './configs';
 import { setUpdateTime, getFiberFromComponent } from './fiber';
@@ -76,15 +77,14 @@ export default function createContext(defaultValue: any): ContextType {
     }
   }
 
-  const context = {
-    id,
-    defaultValue,
-    Provider,
-    Consumer,
-  };
+  // Attach properties to Provider to make it act as the Context object
+  Provider.id = id;
+  Provider.defaultValue = defaultValue;
+  Provider.Provider = Provider;
+  Provider.Consumer = Consumer;
 
   // add contextType information on Consumer
-  Consumer.contextType = context;
+  Consumer.contextType = Provider;
 
-  return context;
+  return Provider;
 }
