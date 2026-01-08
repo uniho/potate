@@ -42,7 +42,7 @@ const resource = watch.create(listener => {
 
 ```
 
-## `initWatch(initializer)`
+## `watch.create(initializer)`
 
 A constructor to bridge external reactive sources to the engine's observer system. It ensures that the engine is notified whenever the underlying data changes.
 
