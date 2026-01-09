@@ -1,4 +1,5 @@
-// @flow
+// core/processComponentFiber.ts
+
 import {
   cloneChildrenFibers,
   createAndLink,
@@ -198,7 +199,7 @@ export default function processComponentFiber(fiber: Fiber): void {
      * do shallow check for props and states
      */
 
-    if (componentClassInstance.isPureReactComponent && checkShouldUpdate) {
+    if (fiber.isReactCompat && componentClassInstance.isPureReactComponent && checkShouldUpdate) {
       shouldUpdate = !shallowEqual(state, prevState) || !shallowEqual(props, prevProps);
     }
 
@@ -207,7 +208,7 @@ export default function processComponentFiber(fiber: Fiber): void {
      * marked component to not update then we don't have to call shouldComponentUpdate
      * Also we shouldn't call shouldComponentUpdate on first render
      */
-    if (shouldComponentUpdate && shouldUpdate && checkShouldUpdate) {
+    if (fiber.isReactCompat && shouldComponentUpdate && shouldUpdate && checkShouldUpdate) {
       shouldUpdate = shouldComponentUpdate.call(componentClassInstance, props, state);
     }
 

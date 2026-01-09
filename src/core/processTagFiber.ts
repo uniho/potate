@@ -1,9 +1,10 @@
-// @flow
+// core/processTagFiber.ts
+
 import { TAG_ELEMENT_NODE, ATTRIBUTE_NODE } from './brahmosNode';
 import { createAndLink, cloneChildrenFibers, markPendingEffect } from './fiber';
 import getTagNode from './TagNode';
 import TemplateNode from './TemplateNode';
-import { getEffectiveAttrName, loopEntries } from './utils';
+import { getEffectiveAttrName, loopEntries, loopEntries_native } from './utils';
 import { RESERVED_ATTRIBUTES, EFFECT_TYPE_OTHER } from './configs';
 
 import type { Fiber, AttributePart } from './flow.types';
@@ -24,6 +25,7 @@ function attributeNode(props, ref) {
 
 function partsToFiber(parts, values, parentFiber) {
   let refFiber = parentFiber;
+  const { isReactCompat } = parentFiber;
   let oldChildFiber = parentFiber.child;
 
   for (let i = 0, ln = parts.length; i < ln; i++) {
@@ -39,14 +41,20 @@ function partsToFiber(parts, values, parentFiber) {
       const dynamicAttributes = {};
       let refValue;
       while (part && domNode === part.domNode) {
-        loopEntries(values[i], (attrName, attrValue) => {
+        const loop = isReactCompat ? loopEntries : loopEntries_native;
+        loop(values[i], (attrName, attrValue) => {
           const attributePart = part as AttributePart;
-          const effectiveAttrName = getEffectiveAttrName(attrName);
-          const isOverridden = isAttrOverridden(
-            attributePart.tagAttrs,
-            effectiveAttrName,
-            attributePart.attrIndex,
-          );
+          let isOverridden = false;
+
+          if (isReactCompat) {
+            const effectiveAttrName = getEffectiveAttrName(attrName);
+            isOverridden = isAttrOverridden(
+              attributePart.tagAttrs,
+              effectiveAttrName,
+              attributePart.attrIndex,
+            );
+          }
+
           if (!isOverridden && !RESERVED_ATTRIBUTES[attrName]) {
             dynamicAttributes[attrName] = attrValue;
           } else if (attrName === 'ref') {

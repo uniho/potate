@@ -1,4 +1,5 @@
-// @flow
+// core/utils.ts
+
 import { BRAHMOS_DATA_KEY, CAMEL_ATTRIBUTES, MODIFIED_ATTRIBUTES } from './configs';
 import type {
   ObjectLiteral,
@@ -6,6 +7,8 @@ import type {
   FunctionalComponent,
   ClassComponent,
 } from './flow.types';
+
+const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 /**
  * Method to identify if a jsx element is a html element or custom component
@@ -114,6 +117,12 @@ export function loopEntries(obj: ObjectLiteral, cb: (key: string, value: any) =>
     const key = keys[i];
     const value = obj[key];
     cb(key, value);
+  }
+}
+
+export function loopEntries_native(obj: ObjectLiteral, cb: (key: string, value: any) => void) {
+  for (const key in obj) {
+    cb(key, obj[key]);
   }
 }
 

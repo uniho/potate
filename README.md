@@ -324,6 +324,7 @@ For the above example, the Brahmos output is 685 bytes, compared to 824 bytes fr
 - [x] React Utilities and Methods
 - [x] ⭐⭐⭐ Vite Plugin to transpile JSX to tagged templates
 - [x] ⭐⭐⭐ Esbuild Plugin to transpile JSX to tagged templates
+- [x] ⭐⭐⭐ [Potate Native Component(PNC)](docs/POTATE_NATIVE_COMPONENT.md)
 - [x] ⭐⭐⭐ [reacty(ReactComponent) API](docs/API.md)
 - [x] ⭐⭐⭐ [watch(resource) API](docs/API.md)
 - [x] ⭐ The Lanes Light **(Though I haven't cleaned up the no-longer-needed TRANSITION_STATE_TIMED_OUT yet.)**
