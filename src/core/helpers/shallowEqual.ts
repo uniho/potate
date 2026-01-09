@@ -3,6 +3,8 @@
  * Source :  https://github.com/facebook/react/blob/master/packages/shared/shallowEqual.js
  */
 
+const hasOwnProperty = Object.prototype.hasOwnProperty;
+
 function shallowEqual(objA: any, objB: any): boolean {
   if (Object.is(objA, objB)) {
     return true;
