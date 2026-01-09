@@ -110,7 +110,7 @@ npx potatejs src/entry-point.js --outdir dist
 
 ## Usage
 
-The API is exact same as React so build how you build application with React, but instead of importing from `react` or `react-dom` import from `potatejs`;
+The API is basically the same as React, allowing you to build applications with your existing knowledge. Simply import from `potatejs` instead of `react` or `react-dom`.
 
 ```js
 import Potate from 'potatejs'
@@ -133,6 +133,9 @@ const root = Potate.createRoot(document.querySelector('#app'))
 root.render(<App/>)
 
 ```
+
+However, Potate components have several key differences from React to maximize native performance.
+For more details, see [Potate Native Component (PNC) Guide](docs/POTATE_NATIVE_COMPONENT.md).
 
 
 ### Using React 3rd party libraries
