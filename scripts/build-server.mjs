@@ -3,7 +3,7 @@ import esbuild from 'esbuild'
 //
 await esbuild.build({
   entryPoints: [
-    "./src/server/renderToString.js",
+    "./src/server/ssr-vite.js",
   ],
   outdir: 'dist',
   bundle: true,

@@ -32,9 +32,9 @@
       "types": "./dist/type.d.ts",
       "import": "./dist/index-esbuild.js"
     },
-    "./server": {
+    "./server/vite": {
       "types": "./dist/type.d.ts",
-      "import": "./dist/renderToString.js"
+      "import": "./dist/ssr-vite.js"
     },
     "./jsx-runtime": {
       "import": "./dist/index.js",
