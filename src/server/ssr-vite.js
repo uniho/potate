@@ -5,7 +5,7 @@ import { renderToString } from './renderToString';
 /**
  * Vite Plugin Export
  */
-export function potateVitePlugin(options) {
+export default function(options) {
   return {
     name: 'potate-ssr-plugin',
     transformIndexHtml(html) {
