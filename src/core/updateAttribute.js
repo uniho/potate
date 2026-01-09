@@ -1,3 +1,5 @@
+// core/updateAttribute.js
+
 import { getEffectiveAttrName, getEventName, isEventAttribute, loopEntries } from './utils';
 
 import {
@@ -34,7 +36,7 @@ function applyDiffProperty(newObj, oldObj, resetValue, cb) {
   });
 }
 
-function setAttribute(node, attrName, attrValue, oldAttrValue, isSvgAttribute) {
+function setAttribute(node, attrName, attrValue, oldAttrValue, isSvgAttribute, isReactCompat) {
   /**
    * children attrName is not a valid attribute, if the attrName is coming as children
    * ignore it. This happens when we are the brahmos nodeType is tag element node.
@@ -131,9 +133,9 @@ function setAttribute(node, attrName, attrValue, oldAttrValue, isSvgAttribute) {
   }
 }
 
-export default function updateNodeAttributes(node, attributes, oldAttributes, isSvgAttribute) {
+export default function updateNodeAttributes(node, attributes, oldAttributes, isSvgAttribute, isReactCompat) {
   applyDiffProperty(attributes, oldAttributes, null, (attrName, attrValue, oldAttrValue) => {
-    setAttribute(node, attrName, attrValue, oldAttrValue, isSvgAttribute);
+    setAttribute(node, attrName, attrValue, oldAttrValue, isSvgAttribute, isReactCompat);
   });
 
   // handle controlled input resetting

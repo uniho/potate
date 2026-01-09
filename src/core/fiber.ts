@@ -1,4 +1,4 @@
-// @flow
+// core/fiber.ts
 
 import {
   isComponentNode,
@@ -122,6 +122,7 @@ export function cloneCurrentFiber(
    */
   wipFiber[updateTimeKey] = parentFiber[updateTimeKey];
 
+  wipFiber.isReactCompat = fiber.isReactCompat;
   // link the new fiber to its parent or it's previous sibling
   linkFiber(wipFiber, refFiber, parentFiber);
 
@@ -222,6 +223,7 @@ export function createFiber(root: HostFiber, node: BrahmosNode, part: Part): Fib
     context: null, // Points to the context applicable for that fiber
     childFiberError: null,
     isSvgPart: false,
+    isReactCompat: false,
     deferredUpdateTime: 0,
     updateTime: 0,
     processedTime: 0, // processedTime 0 signifies it needs processing
@@ -279,6 +281,10 @@ export function createAndLink(
   fiber[updateTimeKey] = parentFiber[updateTimeKey];
   fiber.context = parentFiber.context;
   fiber.isSvgPart = parentFiber.isSvgPart;
+  
+  // React compatibility mode propagation: true if component has flag or parent is compat mode
+  const isComponentCompat = node && node.type && node.type.__isReactCompat;
+  fiber.isReactCompat = isComponentCompat || parentFiber.isReactCompat || false;
 
   return fiber;
 }

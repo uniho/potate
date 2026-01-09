@@ -137,7 +137,11 @@ root.render(<App/>)
 
 ### Using React 3rd party libraries
 
-Just alias react and react-dom with potatejs. And you are good to go using 3rd party react libraries.
+If you want to use existing 3rd party React libraries or write your own components using React syntax (like style objects, custom event and anymore), just wrap them with `reacty()`.
+
+Potate will automatically handle the "React-isms" for that component and its children.
+
+#### Setup Aliases
 
 You need to add following aliases.
 
@@ -173,7 +177,7 @@ export default defineConfig({
 
 ```
 
-#### TEST
+#### Use it
 
 ```bash
 npm install react-select
@@ -182,14 +186,17 @@ npm install react-confetti
 
 ```jsx
 import Potate from 'potatejs'
-import Confetti from 'react-confetti';
-import Select from 'react-select'
+import _Confetti from 'react-confetti';
+import _Select from 'react-select'
 
 const options = [
   { value: 'chocolate', label: 'Chocolate' },
   { value: 'strawberry', label: 'Strawberry' },
   { value: 'vanilla', label: 'Vanilla' }
 ]
+
+const Confetti = Potate.reacty(_Confetti)
+const Select = Potate.reacty(_Select)
 
 const App = (props) => {
   return (<div>
@@ -309,12 +316,13 @@ For the above example, the Brahmos output is 685 bytes, compared to 824 bytes fr
 - [x] React Utilities and Methods
 - [x] ⭐⭐⭐ Vite Plugin to transpile JSX to tagged templates
 - [x] ⭐⭐⭐ Esbuild Plugin to transpile JSX to tagged templates
+- [x] ⭐⭐⭐ [reacty(ReactComponet) API](docs/API.md)
+- [x] ⭐⭐⭐ [watch(resource) API](docs/API.md)
 - [x] ⭐ The Lanes Light **(Though I haven't cleaned up the no-longer-needed TRANSITION_STATE_TIMED_OUT yet.)**
 - [x] ⭐ The Standalone `startTransition`
 - [x] ⭐ Enhanced `useTransition` hook
 - [x] ⭐ Enhanced `useDeferredValue` hook
 - [x] ⭐ `use(resource)` API
-- [x] ⭐⭐⭐ [watch(resource) API](docs/API.md)
 - [x] ⭐ React 19 style root management
 - [x] Allow using class instead of className
 - [x] ⭐ [`<Context>` as a provider](https://react.dev/blog/2024/12/05/react-19#context-as-a-provider)

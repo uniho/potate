@@ -1,4 +1,5 @@
-// @flow
+// core/effectLoop.ts
+
 import {
   isTagElementNode,
   isTagNode,
@@ -301,11 +302,11 @@ function handleComponentPostCommitEffect(fiber) {
 }
 
 function handleAttributeEffect(fiber, domNode) {
-  const { node, alternate, isSvgPart } = fiber;
+  const { node, alternate, isSvgPart, isReactCompat } = fiber;
   const { props, ref } = node;
   const oldProps = alternate && alternate.node.props;
 
-  updateNodeAttributes(domNode, props, oldProps, isSvgPart);
+  updateNodeAttributes(domNode, props, oldProps, isSvgPart, isReactCompat);
 
   // set ref if present
   if (ref) setRef(ref, domNode);

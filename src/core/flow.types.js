@@ -176,6 +176,7 @@ export type Fiber = {|
   context: ?AllContext,
   childFiberError: ?{ error: Error, errorInfo: ErrorInfo },
   isSvgPart: boolean,
+  isReactCompat: boolean,
   deferredUpdateTime: number,
   updateTime: number,
   processedTime: number,

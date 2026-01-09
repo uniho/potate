@@ -1,3 +1,5 @@
+// core/brahmos.ts
+
 /** Component classes,  Suspense and lazy */
 import {
   Component,
@@ -54,6 +56,11 @@ const NoopComponent = (props) => props.children;
 // add a noop component for StrictMode and Fragment, as brahmos don't support any deprecated API
 const StrictMode = NoopComponent;
 const Fragment = NoopComponent;
+
+export function reacty(Component: any) {
+  Component.__isReactCompat = true;
+  return Component;
+}
 
 /**
  * Mock for unstable_batchedUpdates as third party lib like Redux uses it.
