@@ -118,6 +118,21 @@ export { html };
 import { setCurrentComponentFiber } from './fiber';
 import functionalComponentInstance from './functionalComponentInstance';
 
+/**
+ * TODO: Remove this export once the Dispatcher pattern is implemented.
+ *
+ * Currently, these internals are exposed to support SSR by creating a "dummy Fiber"
+ * in `renderToString`. This allows hooks to function without crashing by tricking
+ * them into thinking they are running in a valid Fiber context.
+ *
+ * The correct architectural approach is to implement a Dispatcher pattern (similar to React),
+ * where the implementation of hooks is switched based on the environment (Client vs Server).
+ * - Client: Uses Fiber-based hooks (current implementation).
+ * - Server: Uses lightweight, Fiber-independent hooks.
+ *
+ * When that refactoring is complete, `renderToString` will no longer need access
+ * to these internals, and this export should be deleted.
+ */
 export const __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = {
   setCurrentComponentFiber,
   functionalComponentInstance,
