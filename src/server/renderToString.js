@@ -7,6 +7,8 @@ import {
   isPrimitiveNode,
 } from '../core/brahmosNode';
 
+import Potate from 'potatejs';
+
 const VOID_TAGS = {
   area: 1,
   base: 1,
@@ -86,7 +88,24 @@ export function renderToString(node) {
 
     if (typeof Component === 'function') {
       // Functional Component
-      const child = Component(props);
+      let child;
+
+      // Setup dummy fiber for hooks support if internals are available
+      const { setCurrentComponentFiber, functionalComponentInstance } = Potate.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED || {};
+
+      if (setCurrentComponentFiber && functionalComponentInstance) {
+        const nodeInstance = functionalComponentInstance(Component);
+        const dummyFiber = { nodeInstance, root: { updateType: 'sync' } };
+        setCurrentComponentFiber(dummyFiber);
+        try {
+          child = Component(props);
+        } finally {
+          setCurrentComponentFiber(null);
+        }
+      } else {
+        child = Component(props);
+      }
+
       return renderToString(child);
     }
   }

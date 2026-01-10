@@ -10,6 +10,7 @@ export default function potate() {
         addRenderer({
           name: 'potate',
           serverEntrypoint: 'potatejs/astro/render',
+          clientEntrypoint: 'potatejs/astro/client',
         });
         updateConfig({
           vite: {

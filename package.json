@@ -40,6 +40,10 @@
       "types": "./dist/type.d.ts",
       "import": "./dist/astro-render.js"
     },
+    "./astro/client": {
+      "types": "./dist/type.d.ts",
+      "import": "./dist/astro-client.js"
+    },
     "./server/vite": {
       "types": "./dist/type.d.ts",
       "import": "./dist/ssr-vite.js"
