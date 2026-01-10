@@ -99,6 +99,13 @@ npm run dev
 
 ### Astro
 
+Create your new app.
+
+``` bash
+npm create astro@latest my-app
+cd my-app
+```
+
 Add `potatejs` as a dependency.
 
 ``` bash
