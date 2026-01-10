@@ -10,10 +10,12 @@ const FRAME_DURATION_DEFAULT = 16; // Default we try to keep it under 60 fps
 const DEFERRED_TRANSITION_MAX_RETRY = 300; // close to 5000ms -> 16 * 300 with some buffer
 const OTHER_TRANSITION_MAX_RETRY = 600; // close to 10000ms -> 16 * 600 with some buffer
 
-let firstFrameTime;
-requestAnimationFrame((time) => {
-  firstFrameTime = time;
-});
+let firstFrameTime = 0;
+if (typeof requestAnimationFrame !== 'undefined') {
+  requestAnimationFrame((time) => {
+    firstFrameTime = time;
+  });
+}
 
 const getTime = () => performance.now();
 
