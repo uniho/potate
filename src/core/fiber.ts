@@ -123,6 +123,7 @@ export function cloneCurrentFiber(
   wipFiber[updateTimeKey] = parentFiber[updateTimeKey];
 
   wipFiber.isReactCompat = fiber.isReactCompat;
+  wipFiber.refCleanup = fiber.refCleanup;
   // link the new fiber to its parent or it's previous sibling
   linkFiber(wipFiber, refFiber, parentFiber);
 
@@ -230,6 +231,7 @@ export function createFiber(root: HostFiber, node: BrahmosNode, part: Part): Fib
     createdAt: now(),
     shouldTearDown: false,
     hasUncommittedEffect: EFFECT_TYPE_NONE,
+    refCleanup: null,
   };
 }
 

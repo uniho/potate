@@ -183,6 +183,7 @@ export type Fiber = {|
   createdAt: number,
   shouldTearDown: boolean,
   hasUncommittedEffect: EffectType,
+  refCleanup?: ?Function,
 |};
 
 export type HostFiber = {|

@@ -1,4 +1,5 @@
-// src/core/tearDown.ts
+// core/tearDown.ts
+
 import { callLifeCycle, remove, getNextSibling, isMounted } from './utils';
 
 import {
@@ -54,7 +55,12 @@ function tearDownFiber(fiber, removeDOM) {
   const { ref } = node;
 
   if (ref) {
-    setRef(ref, null);
+    if (fiber.refCleanup) {
+      fiber.refCleanup();
+      fiber.refCleanup = null;
+    } else {
+      setRef(ref, null);
+    }
   }
 
   if (!nodeInstance) return;

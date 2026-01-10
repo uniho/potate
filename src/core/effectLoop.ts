@@ -204,7 +204,7 @@ function handleTagEffect(fiber: Fiber) {
 }
 
 function handleComponentEffect(fiber) {
-  const { node, nodeInstance, root } = fiber;
+  const { node, nodeInstance, root, alternate } = fiber;
   const { updateType } = root;
   const { nodeType } = node;
   const brahmosData = nodeInstance[BRAHMOS_DATA_KEY];
@@ -223,6 +223,19 @@ function handleComponentEffect(fiber) {
       prevProps,
       prevState,
     ]);
+
+    // Handle Ref update
+    const { ref } = node;
+    const oldRef = alternate && alternate.node.ref;
+    if (ref !== oldRef) {
+      if (fiber.refCleanup) {
+        fiber.refCleanup();
+        fiber.refCleanup = null;
+      } else if (oldRef) {
+        setRef(oldRef, null);
+      }
+      if (ref) fiber.refCleanup = setRef(ref, nodeInstance);
+    }
   } else {
     // clean the existing effect
     cleanEffects(fiber, false);
@@ -246,7 +259,7 @@ function handleComponentPostCommitEffect(fiber) {
   const { node, nodeInstance, root, childFiberError } = fiber;
   const { updateType } = root;
 
-  const { nodeType, ref } = node;
+  const { nodeType } = node;
   const brahmosData = nodeInstance[BRAHMOS_DATA_KEY];
 
   if (nodeType === CLASS_COMPONENT_NODE) {
@@ -273,9 +286,6 @@ function handleComponentPostCommitEffect(fiber) {
       // reset the error
       fiber.childFiberError = null;
     }
-
-    // if the component node has ref call the ref with the node instance
-    if (ref) setRef(ref, nodeInstance);
 
     // after commit is done set the current prop and state on committed values
     committedValues.props = props;
@@ -309,7 +319,16 @@ function handleAttributeEffect(fiber, domNode) {
   updateNodeAttributes(domNode, props, oldProps, isSvgPart, isReactCompat);
 
   // set ref if present
-  if (ref) setRef(ref, domNode);
+  const oldRef = alternate && alternate.node.ref;
+  if (ref !== oldRef) {
+    if (fiber.refCleanup) {
+      fiber.refCleanup();
+      fiber.refCleanup = null;
+    } else if (oldRef) {
+      setRef(oldRef, null);
+    }
+    if (ref) fiber.refCleanup = setRef(ref, domNode);
+  }
 }
 
 export function resetEffectProperties(root: HostFiber) {
