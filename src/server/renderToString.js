@@ -83,7 +83,10 @@ export function renderToString(node) {
     const props = node.props || {};
     
     if ((Component.prototype && Component.prototype.isReactComponent) || Component.__isReactCompat) {
-      throw new Error('React Components are not supported in Potate Native SSR.');
+      // Return empty string for React components to allow client-side rendering.
+      // This enables support for Astro directives like client:load, where the
+      // component is rendered entirely on the client side.
+      return '';
     }
 
     if (typeof Component === 'function') {
