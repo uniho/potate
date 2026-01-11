@@ -21,6 +21,45 @@ Potate supports all the APIs of React including the upcoming concurrent mode API
 
 ## Installation
 
+### Astro
+
+Create your new app.
+
+``` bash
+npm create astro@latest my-app
+cd my-app
+```
+
+Add `potatejs` as a dependency.
+
+``` bash
+npm install potatejs
+
+```
+
+> **Note**: Potate uses its own JSX runtime. To avoid JSX transformation conflicts, please ensure that `@astrojs/react` or other JSX-based integrations are not enabled in your Astro project.
+
+Add the integration in `astro.config.mjs`.
+
+```js
+import { defineConfig } from 'astro/config';
+import potate from 'potatejs/astro';
+
+export default defineConfig({
+  integrations: [potate()],
+});
+```
+
+Now you can use Potate components (`.jsx`) directly in your `.astro` files.
+
+> **Note:** Potate in Astro Islands
+>
+> * **No directive (Server Only)**: Rendered as just static HTML tags. It results in zero client-side JavaScript. (Honestly, I'm not even sure if there's much point in writing static content in JSX instead of just using .astro files. It's just an option, and for most cases, standard .astro is more than enough, right?)
+> * `client:only="react"` **(Client Only)**: This is the mode where the relationship between Potate/React and Astro is the clearest.
+>
+> * `client:load` **(SSR Hydration)**: These are for "SSR Hydration." Despite the fancy name, it's not that complicated: it just creates a static HTML skeleton first, and once the JS is ready, the engine takes over the DOM as if it had been there from the start. If you are particular about the visual transition—like ensuring there is no layout shift by pre-setting an image's height—you might want to take control to make the swap feel completely natural.
+
+
 ### Vite
 
 Create your new app with `select a framework: > Vanilla`.
@@ -97,38 +136,6 @@ npm run dev
 ```
 
 
-### Astro
-
-Create your new app.
-
-``` bash
-npm create astro@latest my-app
-cd my-app
-```
-
-Add `potatejs` as a dependency.
-
-``` bash
-npm install potatejs
-
-```
-
-> **Note**: Potate uses its own JSX runtime. To avoid JSX transformation conflicts, please ensure that `@astrojs/react` or other JSX-based integrations are not enabled in your Astro project.
-
-Add the integration in `astro.config.mjs`.
-
-```js
-import { defineConfig } from 'astro/config';
-import potate from 'potatejs/astro';
-
-export default defineConfig({
-  integrations: [potate()],
-});
-```
-
-Now you can use Potate components (`.jsx`) directly in your `.astro` files.
-
-
 ### Esbuild
 
 Add `potatejs` as a dependency. And `esbuild` as a dev dependency.
@@ -182,80 +189,8 @@ If you want to use existing 3rd party React libraries or write your own componen
 
 Potate will automatically handle the "React-isms" for that component and its children.
 
-#### Setup Aliases
+For more details, see [Potate API Documentation](docs/API.md).
 
-You need to add following aliases.
-
-```js
-// vite.config.ts
-export default defineConfig({
-
-  resolve: {
-    alias: {
-      'react': 'potatejs',
-      'react-dom': 'potatejs',
-      'react/jsx-runtime': 'potatejs',
-    },
-  },
-
-});
-
-```
-
-```json
-// tsconfig.json - Probably not required, but add it if necessary.
-{
-  "compilerOptions": {
-
-    "paths": {
-      "react": ["./node_modules/potatejs"],
-      "react-dom": ["./node_modules/potatejs"],
-      "react/jsx-runtime": ["./node_modules/potatejs"],
-    },
-
-  }
-}
-
-```
-
-#### Use it
-
-```bash
-npm install react-select
-npm install react-confetti
-npm install react-simple-typewriter
-```
-
-```jsx
-import Potate from 'potatejs'
-import Confetti from 'react-confetti'
-import Select from 'react-select'
-import {Typewriter} from 'react-simple-typewriter'
-
-const options = [
-  { value: 'chocolate', label: 'Chocolate' },
-  { value: 'strawberry', label: 'Strawberry' },
-  { value: 'vanilla', label: 'Vanilla' }
-]
-
-Potate.reacty(Confetti, Select, Typewriter)
-
-const App = (props) => {
-  return (<div>
-    <Confetti width={1000} height={1000} />
-    <Select options={options} />
-    <Typewriter
-      words={['Hello Potate', 'I am for React', 'It works!']}
-      loop={5}
-      cursor
-    />
-  </div>)
-}
-
-const root = Potate.createRoot(document.querySelector('#app'))
-root.render(<App/>)
-
-```
 
 ## Idea
 

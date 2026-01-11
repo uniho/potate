@@ -5,9 +5,26 @@
 
 Declares that components created for React will be used within Potate. Once a component is marked as a React component, all of its descendants (children) are also treated as React components. You can pass multiple components as arguments to mark them all at once.
 
-### Setup Aliases
+### Setup & Dependencies
 
-You need to add following aliases.
+How to setup aliases depends on your environment.
+
+#### For Astro
+
+Potate handles all Vite aliases automatically. However, whether you need to install the `react` package depends on how you use `reacty`:
+
+* **No directive (Server Only)**: The component is rendered as just static HTML tags. Even with `reacty`, `react` **is not required**.
+* `client:only="react"` **(Client Only)**: The component runs only in the browser.  Even with `reacty`, `react` **is not required**.
+* `client:load` / `client:visible` **(SSR Hydration)**: If you want to inject React components using `reacty` within these directives, **you must install `react` as a development dependency.** This acts as a technical dummy for Node.js to resolve third-party imports during the SSR-to-Client handover.
+
+```bash
+# Only required for SSR Hydration
+npm install -D react
+```
+
+#### For Pure Vite
+
+If you are using Potate in a standalone Vite project, you must manually configure the following aliases:
 
 ```js
 // vite.config.ts
@@ -41,7 +58,9 @@ export default defineConfig({
 
 ```
 
-### Use it
+### Implementation Example
+
+The component definition remains the same, but the entry point differs between Astro and Pure Vite.
 
 ```bash
 npm install react-select
@@ -75,6 +94,14 @@ const App = (props) => {
   </div>)
 }
 
+// --- Output ---
+
+// For Astro: Just export the component. 
+// Astro handles the mounting process based on client directives.
+export default App
+
+// For Pure Vite: Manually create a root and render.
+// Use this for single-page applications (SPA).
 const root = Potate.createRoot(document.querySelector('#app'))
 root.render(<App/>)
 
