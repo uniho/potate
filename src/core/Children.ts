@@ -91,7 +91,10 @@ function forEach(children: any, cb: ArrayCallback): void {
 
 function only(children: any) {
   const _children = getChildrenArray(children);
-  return _children && children.length === 1;
+  if (_children && _children.length === 1) {
+    return _children[0];
+  }
+  throw new Error('React.Children.only expected to receive a single React element child.');
 }
 
 function count(children: any): number {
