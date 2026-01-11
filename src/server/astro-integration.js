@@ -15,6 +15,13 @@ export default function potate() {
         updateConfig({
           vite: {
             plugins: [potateVite()],
+            resolve: {
+              alias: {
+                'react': 'potatejs',
+                'react-dom': 'potatejs',
+                'react/jsx-runtime': 'potatejs',
+              },
+            },
           },
         });
       },
