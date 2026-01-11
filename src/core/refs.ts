@@ -26,7 +26,8 @@ export function setRef(ref: Ref, instance: any): void | Function {
    * Brahmos does not support string ref as they are deprecated
    */
   if (typeof ref === 'function') {
-    return ref(instance);
+    const cleanup = ref(instance);
+    return typeof cleanup === 'function' ? cleanup : undefined;
   } else if (typeof ref === 'object') {
     ref.current = instance;
   }

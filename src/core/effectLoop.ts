@@ -228,11 +228,12 @@ function handleComponentEffect(fiber) {
     const { ref } = node;
     const oldRef = alternate && alternate.node.ref;
     if (ref !== oldRef) {
-      if (fiber.refCleanup) {
+      if (typeof fiber.refCleanup === 'function') {
         fiber.refCleanup();
         fiber.refCleanup = null;
-      } else if (oldRef) {
-        setRef(oldRef, null);
+      } else {
+        fiber.refCleanup = null;
+        if (oldRef) setRef(oldRef, null);
       }
       if (ref) fiber.refCleanup = setRef(ref, nodeInstance);
     }
@@ -321,11 +322,12 @@ function handleAttributeEffect(fiber, domNode) {
   // set ref if present
   const oldRef = alternate && alternate.node.ref;
   if (ref !== oldRef) {
-    if (fiber.refCleanup) {
+    if (typeof fiber.refCleanup === 'function') {
       fiber.refCleanup();
       fiber.refCleanup = null;
-    } else if (oldRef) {
-      setRef(oldRef, null);
+    } else {
+      fiber.refCleanup = null;
+      if (oldRef) setRef(oldRef, null);
     }
     if (ref) fiber.refCleanup = setRef(ref, domNode);
   }

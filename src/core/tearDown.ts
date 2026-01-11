@@ -55,10 +55,11 @@ function tearDownFiber(fiber, removeDOM) {
   const { ref } = node;
 
   if (ref) {
-    if (fiber.refCleanup) {
+    if (typeof fiber.refCleanup === 'function') {
       fiber.refCleanup();
       fiber.refCleanup = null;
     } else {
+      fiber.refCleanup = null;
       setRef(ref, null);
     }
   }
