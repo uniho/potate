@@ -27,15 +27,28 @@ import type {
   ExtendedElement,
 } from './flow.types';
 
-let currentComponentFiber;
+const GLOBAL_FIBER_KEY = Symbol.for('potate.currentFiber');
+const globalScope: any =
+  typeof globalThis !== 'undefined'
+    ? globalThis
+    : typeof window !== 'undefined'
+    ? window
+    : typeof global !== 'undefined'
+    ? global
+    : {};
+
+if (!globalScope[GLOBAL_FIBER_KEY]) {
+  globalScope[GLOBAL_FIBER_KEY] = { current: null };
+}
+const fiberRef = globalScope[GLOBAL_FIBER_KEY];
 
 export function setCurrentComponentFiber(fiber: Fiber | null | undefined) {
-  currentComponentFiber = fiber;
+  fiberRef.current = fiber;
 }
 
 export function getCurrentComponentFiber(): Fiber {
   // $FlowFixMe: Get current component is always called during render, where it will be present
-  return currentComponentFiber;
+  return fiberRef.current;
 }
 
 export function getLastCompleteTimeKey(
