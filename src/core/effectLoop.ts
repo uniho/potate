@@ -263,6 +263,12 @@ function handleComponentPostCommitEffect(fiber) {
   const { nodeType } = node;
   const brahmosData = nodeInstance[BRAHMOS_DATA_KEY];
 
+  // mark component as mounted
+  brahmosData.mounted = true;
+
+  // add fiber reference on component instance, so the component is aware of its fiber
+  brahmosData.fiber = fiber;
+
   if (nodeType === CLASS_COMPONENT_NODE) {
     const { props, state } = nodeInstance;
     const { committedValues, lastSnapshot } = brahmosData;
@@ -304,12 +310,6 @@ function handleComponentPostCommitEffect(fiber) {
       nodeInstance.syncHooks = deferredHooks;
     }
   }
-
-  // mark component as mounted
-  brahmosData.mounted = true;
-
-  // add fiber reference on component instance, so the component is aware of its fiber
-  brahmosData.fiber = fiber;
 }
 
 function handleAttributeEffect(fiber, domNode) {

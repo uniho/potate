@@ -17,7 +17,7 @@ import { getPendingUpdates, withUpdateSource } from './updateUtils';
 
 import shallowEqual from './helpers/shallowEqual';
 import { BRAHMOS_DATA_KEY, EFFECT_TYPE_OTHER, UPDATE_TYPE_DEFERRED } from './configs';
-import { Component } from './Component';
+import { Component as BrahmosComponent } from './Component';
 
 import type {
   Fiber,
@@ -35,7 +35,7 @@ export function getErrorBoundaryFiber(fiber: Fiber): Fiber | null | undefined {
   while (
     (fiber = fiber.parent) &&
     !(
-      fiber.nodeInstance instanceof Component &&
+      fiber.nodeInstance instanceof BrahmosComponent &&
       (fiber.nodeInstance.componentDidCatch || fiber.node.type.getDerivedStateFromError)
     )
   ) {
@@ -128,6 +128,36 @@ export default function processComponentFiber(fiber: Fiber): void {
     fiber.nodeInstance = nodeInstance;
 
     isFirstRender = true;
+  }
+
+  // Check if brahmosData is present, if not initialize it.
+  // This is required for components which does not extend Brahmos Component (e.g. React Components)
+  if (isClassComponent && !nodeInstance[BRAHMOS_DATA_KEY]) {
+    nodeInstance[BRAHMOS_DATA_KEY] = {
+      lastSnapshot: null,
+      pendingSyncUpdates: [],
+      pendingDeferredUpdates: [],
+      fiber: null,
+      nodes: null,
+      mounted: false,
+      committedValues: {},
+      memoizedValues: null,
+      isDirty: false,
+      renderCount: 0,
+    };
+
+    // Patch setState and forceUpdate to use Brahmos implementation
+    nodeInstance.setState = BrahmosComponent.prototype.setState;
+    nodeInstance.forceUpdate = BrahmosComponent.prototype.forceUpdate;
+  }
+
+  // Check if __render is present, if not initialize it.
+  if (isClassComponent && !nodeInstance.__render) {
+    nodeInstance.__render = function() {
+      const nodes = this.render();
+      this[BRAHMOS_DATA_KEY].nodes = nodes;
+      return nodes;
+    };
   }
 
   //
