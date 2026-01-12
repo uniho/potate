@@ -90,6 +90,10 @@ export const InteractiveBox = () => {
 
 ## 🛠 The Patterns 
 
+In Potate, we refer to reusable CSS logic as "The Patterns".
+
+Honestly? They’re just standard JavaScript functions that return styles. No complex registration, no hidden magic. You just write a function, and that's it. Simple, right? 🤤
+
 ### LinkOverlay
 
 You can easily implement the LinkOverlay pattern. This expands a link's clickable area to its nearest parent with `position: relative`.
