@@ -4,9 +4,9 @@ A natural and powerful Zero-Runtime CSS-in-JS solution, seamlessly integrated wi
 
 ## 🚀 Why it matters
 
-I used to think there wasn't much point in writing static content in JSX instead of just using `.astro` files. It seemed like standard `.astro` was more than enough for most cases.
+I used to think there wasn't much point in writing static content in JSX components (`.jsx` or `.tsx` files) instead of just using Astro components (`.astro` files). It seemed like standard Astro components were more than enough for most cases, because I thought having frontmatter, the HTML tag section, and the style section was all I ever needed.
 
-However, I've realized one major advantage: "SSR EMOTION". While other frameworks often struggle with complex configurations to get Emotion working with SSR, Potate bridges this gap naturally. It allows you to use the power of CSS-in-JS without any of the typical performance trade-offs.
+However, I've realized one major advantage: "SSR EMOTION". While other frameworks often struggle with complex configurations to get `Emotion` working with SSR, Potate bridges this gap naturally. It allows you to use the power of CSS-in-JS without any of the typical performance trade-offs.
 
 ## 💎 The Result
 
