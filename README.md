@@ -19,7 +19,7 @@ Potate supports all the APIs of React including the upcoming concurrent mode API
 - Fast alternative to Virtual DOM. (JSX without VDOM).
 - Smaller transpiled footprint of your source code, than traditional JSX.
 
-#### LIVE DEMO with Astro
+## LIVE DEMO with Astro
 
 [Here](https://stackblitz.com/edit/github-cywxrcwm-3n79zz3t?file=src%2Fcomponents%2FPotate.jsx
 ) is a live demo with Astro on StackBlitz.
