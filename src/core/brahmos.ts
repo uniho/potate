@@ -103,8 +103,7 @@ export {createRoot} from './root'
 export {use} from './use';
 export {startTransition} from './hooks';
 export {flushSync} from './updateUtils';
-
-export {watch, initWatch} from './watch';
+export {watch} from './watch';
 
 export function reacty(...Components: any[]) {
   Components.forEach((Component) => {
