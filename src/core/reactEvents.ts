@@ -1,6 +1,8 @@
+// core/reactEvents.ts
+
 import { getNodeName } from './utils';
-import { syncUpdates } from './updateUtils';
-import { RENAMED_EVENTS, ONCHANGE_INPUT_TYPES } from './configs';
+import { withUpdateSource } from './updateUtils';
+import { RENAMED_EVENTS, ONCHANGE_INPUT_TYPES, UPDATE_SOURCE_IMMEDIATE_ACTION } from './configs';
 
 export function getEffectiveEventName(eventName, node) {
   const { type } = node;
@@ -89,7 +91,7 @@ export function getPatchedEventHandler(node, attrName, handler) {
   eventHandlerObj.patched = function(event) {
     // if the handler is defined call the handler
     if (eventHandlerObj.handler) {
-      syncUpdates(() => {
+      withUpdateSource(UPDATE_SOURCE_IMMEDIATE_ACTION, () => {
         eventHandlerObj.handler.call(this, event);
       });
     }

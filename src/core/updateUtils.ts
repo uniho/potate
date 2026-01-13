@@ -145,19 +145,11 @@ export function deferredUpdates(cb: Function): void {
   withTransition(PREDEFINED_TRANSITION_DEFERRED, cb);
 }
 
-/**
- * function to trigger sync updates which doesn't schedule
- * And rendered and committed synchronously
- */
-export function syncUpdates(cb: Function): any {
-  return withUpdateSource(UPDATE_SOURCE_IMMEDIATE_ACTION, cb);
-}
-
 export function flushSync(cb: Function): any {
   const prevFlushing = flushingSync;
   flushingSync = true;
   try {
-    return syncUpdates(cb);
+    return withUpdateSource(UPDATE_SOURCE_IMMEDIATE_ACTION, cb);
   } finally {
     flushingSync = prevFlushing;
   }

@@ -1,12 +1,13 @@
-// @flow
+// core/render.ts
+
 import { createBrahmosNode } from './circularDep';
 import { CLASS_COMPONENT_NODE } from './brahmosNode';
 import { BrahmosRootComponent } from './utils';
 import { createFiber, createHostFiber, setUpdateTime } from './fiber';
 import { doSyncProcessing } from './workLoop';
-import { syncUpdates, getCurrentUpdateSource } from './updateUtils';
+import { withUpdateSource, getCurrentUpdateSource } from './updateUtils';
 
-import { UPDATE_TYPE_SYNC } from './configs';
+import { UPDATE_TYPE_SYNC, UPDATE_SOURCE_IMMEDIATE_ACTION } from './configs';
 
 import type { ExtendedElement } from './flow.types';
 
@@ -56,7 +57,7 @@ export default function render(node: any, target: ExtendedElement) {
    * NOTE: This will also affect sync setStates inside componentDidMount, or useEffects.
    * This is expected to prevent multiple repaints
    */
-  syncUpdates(() => {
+  withUpdateSource(UPDATE_SOURCE_IMMEDIATE_ACTION, () => {
     rootFiber.updateSource = getCurrentUpdateSource();
     doSyncProcessing(fiber);
   });
