@@ -19,6 +19,11 @@ Potate supports all the APIs of React including the upcoming concurrent mode API
 - Fast alternative to Virtual DOM. (JSX without VDOM).
 - Smaller transpiled footprint of your source code, than traditional JSX.
 
+#### LIVE DEMO with Astro
+
+[Here](https://stackblitz.com/edit/github-cywxrcwm-3n79zz3t?file=src%2Fcomponents%2FPotate.jsx
+) is a live demo with Astro on StackBlitz.
+
 ## Installation
 
 ### Astro
@@ -58,12 +63,6 @@ Now, you can use not only Astro components (`.astro`) but also Potate JSX compon
 > * `client:only="potate"` **(Client Only)**: This is the mode where the relationship between Potate and Astro is the clearest. (In this context, Potate plays the same role as React in other integrations.) It skips server-side rendering and runs entirely in the browser.
 >
 > * `client:load`(and others like `client:visible` or `client:idle`) **(SSR Hydration)**: Despite its cool and flashy name, "SSR Hydration" is not that complicated: it just creates a static HTML skeleton first, and once the JS is ready, the engine takes over the DOM as if it had been there from the start. If you are particular about the visual transition—like ensuring there is no layout shift by pre-setting an image's height—you might want to take control to make the swap feel completely natural.
-
-
-#### LIVE DEMO with Astro
-
-[Here](https://stackblitz.com/edit/github-cywxrcwm-3n79zz3t?file=src%2Fcomponents%2FPotate.jsx
-) is a live demo with Astro on StackBlitz.
 
 
 ### Vite
