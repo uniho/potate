@@ -1,10 +1,16 @@
-// @flow
+// core/reRender.ts
+
 import {
   UPDATE_SOURCE_IMMEDIATE_ACTION,
   UPDATE_SOURCE_TRANSITION,
   UPDATE_TYPE_SYNC,
 } from './configs';
-import { getCurrentUpdateSource, getCurrentTransition, getUpdateType } from './updateUtils';
+import {
+  getCurrentUpdateSource,
+  getCurrentTransition,
+  getUpdateType,
+  isFlushingSync,
+} from './updateUtils';
 import { PREDEFINED_TRANSITION_DEFERRED } from './transitionUtils';
 import { setUpdateTime, getFiberFromComponent } from './fiber';
 import { doSyncProcessing, doDeferredProcessing } from './workLoop';
@@ -64,7 +70,7 @@ export default function reRender(component: AnyComponentInstance): void {
 
   batchUpdates[currentUpdateSource] = 1;
 
-  afterCurrentStack(() => {
+  const performUpdate = () => {
     const reRenderCount = batchUpdates[currentUpdateSource];
     // reset batch update so it can start taking new updates
     batchUpdates[currentUpdateSource] = 0;
@@ -97,5 +103,11 @@ export default function reRender(component: AnyComponentInstance): void {
 
       doSyncProcessing(startFromFiber ? fiber : root.current);
     }
-  });
+  };
+
+  if (currentUpdateSource === UPDATE_SOURCE_IMMEDIATE_ACTION && isFlushingSync()) {
+    performUpdate();
+  } else {
+    afterCurrentStack(performUpdate);
+  }
 }

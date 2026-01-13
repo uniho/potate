@@ -36,6 +36,11 @@ export const deferredMeta = {
 let updateSource = UPDATE_SOURCE_DEFAULT;
 let currentTransition = PREDEFINED_TRANSITION_SYNC;
 
+let flushingSync = false;
+export function isFlushingSync(): boolean {
+  return flushingSync;
+}
+
 export function getDeferredMeta() {
   return { ...deferredMeta };
 }
@@ -66,10 +71,14 @@ function resetUpdateSource() {
 /**
  * Function to execute something in context of custom source
  */
-export function withUpdateSource(source: UpdateSource, cb: Function): void {
+export function withUpdateSource(source: UpdateSource, cb: Function): any {
+  const prevSource = updateSource;
   updateSource = source;
-  cb();
-  updateSource = UPDATE_SOURCE_DEFAULT;
+  try {
+    return cb();
+  } finally {
+    updateSource = prevSource;
+  }
 }
 
 export function withTransition(transition: AnyTransition, cb: Function): void {
@@ -140,8 +149,18 @@ export function deferredUpdates(cb: Function): void {
  * function to trigger sync updates which doesn't schedule
  * And rendered and committed synchronously
  */
-export function syncUpdates(cb: Function): void {
-  withUpdateSource(UPDATE_SOURCE_IMMEDIATE_ACTION, cb);
+export function syncUpdates(cb: Function): any {
+  return withUpdateSource(UPDATE_SOURCE_IMMEDIATE_ACTION, cb);
+}
+
+export function flushSync(cb: Function): any {
+  const prevFlushing = flushingSync;
+  flushingSync = true;
+  try {
+    return syncUpdates(cb);
+  } finally {
+    flushingSync = prevFlushing;
+  }
 }
 
 function getComponentFiberInWorkingTree(fiber, nodeInstance) {

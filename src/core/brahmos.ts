@@ -45,7 +45,7 @@ import { forwardRef, createRef } from './refs';
 import unmountComponentAtNode from './unmountComponentAtNode';
 
 /** unstableBatchedUpdate */
-import { deferredUpdates, syncUpdates } from './updateUtils';
+import { deferredUpdates, syncUpdates, flushSync } from './updateUtils';
 
 /** import top level api */
 import { Children, isValidElement, cloneElement } from './Children';
@@ -96,6 +96,7 @@ export {
   cloneElement,
   deferredUpdates as unstable_deferredUpdates,
   syncUpdates as unstable_syncUpdates,
+  flushSync,
   unstable_batchedUpdates,
   memo,
   StrictMode,
