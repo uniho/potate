@@ -99,7 +99,7 @@ Honestly? They’re just standard JavaScript functions that return styles. No co
 You can easily implement the LinkOverlay pattern. This expands a link's clickable area to its nearest parent with `position: relative`.
 
 ```jsx
-import { css } from '@emotion/css';
+import { css } from '@emotion/css'
 
 const linkOverlay = (...args) => css({
   '&::before': {
@@ -111,9 +111,9 @@ const linkOverlay = (...args) => css({
     height: '100%',
     zIndex: 0,
   },
-}, ...args);
+}, ...args)
 
-export const Card = () => (
+export default props => (
   // The parent must have position: relative
   <div class={css({ position: 'relative', border: '1px solid #ccc', padding: '1rem' })}>
     <img src="https://via.placeholder.com/150" alt="placeholder" />
@@ -122,9 +122,39 @@ export const Card = () => (
       View more
     </a>
   </div>
+)
+
+```
+
+### Media Query
+
+```jsx
+import { css } from '@emotion/css';
+
+const BP = {
+  sm: '640px', md: '768px', lg: '1024px', xl: '1280px', '2xl': '1536px',
+}
+
+const isBP = value => value in BP
+const _gt = bp => `(min-width: ${isBP(bp) ? BP[bp] : bp})`
+const _lt = bp => `(max-width: ${isBP(bp) ? BP[bp] : bp})`
+
+const gt = (bp, ...args) => css({[`@media ${_gt(bp)}`]: args})
+const lt = (bp, ...args) => css({[`@media ${_lt(bp)}`]: args})
+const bw = (min, max, ...args) => css({[`@media ${_gt(min)} and ${_lt(max)}`]: args})
+
+export default props => (
+  <div class={css(
+    { color: 'black' }, // default css
+		bw('sm', '75rem', { color: 'blue' }), // between
+		gt('75rem', { color: 'red' }), // greater than
+  )}>
+    Responsive Design!
+  </div>
 );
 
 ```
+
 
 ## 🛠 Advanced
 
