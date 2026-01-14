@@ -27,44 +27,8 @@ npm install -D react
 
 #### For Pure Vite
 
-If you are using Potate in a standalone Vite project, you must manually configure the following aliases:
+Potate handles all Vite aliases automatically.
 
-```js
-// vite.config.ts
-import { defineConfig } from 'vite'
-import potate from 'potatejs/vite'
-
-export default defineConfig({
-  plugins: [potate()],
-
-  // Add the following
-  resolve: {
-    alias: {
-      'react': 'potatejs',
-      'react-dom': 'potatejs',
-      'react/jsx-runtime': 'potatejs',
-    },
-  },
-  
-});
-
-```
-
-```json
-// tsconfig.json - Probably not required, but add it if necessary.
-{
-  "compilerOptions": {
-
-    "paths": {
-      "react": ["./node_modules/potatejs"],
-      "react-dom": ["./node_modules/potatejs"],
-      "react/jsx-runtime": ["./node_modules/potatejs"],
-    },
-
-  }
-}
-
-```
 
 ### Implementation Example
 
