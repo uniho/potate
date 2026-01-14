@@ -24,9 +24,9 @@
       "require": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./vite": {
+    "./vite/jsx": {
       "types": "./dist/type.d.ts",
-      "import": "./dist/index-vite.js"
+      "import": "./dist/index-vite-jsx.js"
     },
     "./esbuild/jsx": {
       "types": "./dist/type.d.ts",

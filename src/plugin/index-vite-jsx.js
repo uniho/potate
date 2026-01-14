@@ -1,8 +1,8 @@
-// plugin/index-vite.js
+// plugin/index-vite-jsx.js
 
 import { transformCode } from './transformer.js';
 
-export default function teli() {
+export default function() {
   return {
     name: 'potatejs',
     enforce: 'pre',

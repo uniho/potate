@@ -3,7 +3,7 @@ import esbuild from 'esbuild'
 //
 await esbuild.build({
   entryPoints: [
-    "./src/plugin/index-vite.js",
+    "./src/plugin/index-vite-jsx.js",
     "./src/plugin/index-esbuild-jsx.js",
   ],
   outdir: 'dist',

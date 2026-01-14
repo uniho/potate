@@ -1,6 +1,6 @@
 // server/astro-integration.js
 
-import potateVite from '../plugin/index-vite'
+import potateVite from '../plugin/index-vite-jsx'
 
 export default function potate() {
   return {
