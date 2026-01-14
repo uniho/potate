@@ -28,9 +28,9 @@
       "types": "./dist/type.d.ts",
       "import": "./dist/index-vite.js"
     },
-    "./esbuild": {
+    "./esbuild/jsx": {
       "types": "./dist/type.d.ts",
-      "import": "./dist/index-esbuild.js"
+      "import": "./dist/index-esbuild-jsx.js"
     },
     "./astro": {
       "types": "./dist/type.d.ts",

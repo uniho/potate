@@ -1,4 +1,4 @@
-// plugin/index-esbuild.js
+// plugin/index-esbuild-jsx.js
 
 import fs from 'node:fs/promises';
 import { transformCode } from './transformer.js';
