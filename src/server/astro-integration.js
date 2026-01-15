@@ -22,6 +22,12 @@ export default function potate() {
                 'react/jsx-runtime': 'potatejs',
               },
             },
+            ssr: {
+              external: ['@emotion/css', '@emotion/server']
+            },
+            optimizeDeps: {
+              exclude: ['@emotion/css', '@emotion/server']
+            }
           },
         });
       },

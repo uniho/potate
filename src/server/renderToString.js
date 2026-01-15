@@ -5,6 +5,7 @@ import {
   isTagElementNode,
   isComponentNode,
   isPrimitiveNode,
+  FUNCTIONAL_COMPONENT_NODE,
 } from '../core/brahmosNode';
 
 import Potate from 'potatejs';
@@ -157,3 +158,5 @@ export function renderToString(node) {
 
   return '';
 }
+
+export { FUNCTIONAL_COMPONENT_NODE };
