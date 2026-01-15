@@ -19,14 +19,11 @@ export default ({initName, pageRoot}) => `
       const { island: name, client: mode } = el.dataset;
       const path = Object.keys(modules).find(p => {
         const noExt = p.replace(/\\.[^/.]+$/, "");
-        if (name === '/') {
-          return noExt.endsWith('/index');
-        }
-        return noExt.endsWith(\`/\${name}/index\`);
+        return noExt.endsWith(\`\${name}\`);
       });
 
       if (!path) {
-        console.warn(\`[Potate] "${pageRoot}/\${name}" not found.\`);
+        console.warn(\`[Potate] "${pageRoot}\${name}" not found.\`);
         continue;
       }
 

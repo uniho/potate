@@ -15,11 +15,7 @@ const initName = '_init';
 
 export default function(options = {}) {
 
-  let viteConfig
-  let devServer
-  let runner
-  let localServer
-  let runtimeRefId
+  let viteConfig, devServer, runner, localServer, runtimeRefId
 
   const RUNTIME_PUBLIC_ID = 'virtual:potate-runtime';
   const RUNTIME_INTERNAL_ID = '\0' + RUNTIME_PUBLIC_ID;
@@ -34,6 +30,7 @@ export default function(options = {}) {
     name: 'potate',
     enforce: 'pre',
     config() {
+      const projectRoot = process.cwd();      
       return {
         plugins: [potateVite()],
         resolve: {
@@ -43,12 +40,11 @@ export default function(options = {}) {
             'react/jsx-runtime': 'potatejs',
           },
         },
-        ssr: {
-          external: ['@emotion/css', '@emotion/server']
-        },
-        optimizeDeps: {
-          exclude: ['@emotion/css', '@emotion/server']
-        }
+        root: userConfig.root || path.resolve(projectRoot, 'src/pages'),
+        publicDir: userConfig.publicDir || path.resolve(projectRoot, 'public'),
+        server: {fs: {allow: userConfig.server?.fs?.allow || [projectRoot]}},        
+        ssr: {external: ['@emotion/css', '@emotion/server']},
+        optimizeDeps: {exclude: ['@emotion/css', '@emotion/server']},
       };
     },
 
@@ -124,8 +120,7 @@ export default function(options = {}) {
     //
     async transformIndexHtml(html, ctx) {
       let server = ctx?.server;
-      
-      const islandRegex = /<([a-z0-9]+)[^>]+data-island="([^"]+)"[^>]*>([\s\S]*?)<\/\1>/g;
+      const islandRegex = /<([a-z0-9]+)[^>]*data-island(?:="([^"]*)")?[^>]*>([\s\S]*?)<\/\1>/g;
       const matches = Array.from(html.matchAll(islandRegex));
       
       if (!matches.length) return html; // no island
@@ -159,7 +154,22 @@ export default function(options = {}) {
       let allCss = "";
       let processedHtml = html;
 
-      for (const [fullTag, tagName, name, slot] of matches) {
+      for (const [fullTag, tagName, rawname, slot] of matches) {
+        const cname = rawname ?? '';
+        const dirname = path.dirname(ctx.path);
+        let name = cname.endsWith('/') ? cname.slice(0, -1) : cname;
+
+        if (!name) {
+          if (dirname !== '/') name = dirname;
+          name += '/index';
+        }
+
+        if (!name.startsWith('/')) {
+          let sf = name;
+          if (dirname !== '/') sf = `/${name}`;
+          name = dirname + sf;
+        }
+
         const mod = await runner.executeId(`${RUNNER_PUBLIC_ID}:${name}`);
 
         const { html: appHtml, css, ids } = await mod.run(slot);
@@ -168,7 +178,8 @@ export default function(options = {}) {
 
         const openTagMatch = fullTag.match(/^<[^>]+>/);
         if (openTagMatch) {
-          const openTag = openTagMatch[0];
+          let openTag = openTagMatch[0];
+          openTag = openTag.replace(/data-island(?:="[^"]*")?/, `data-island="${name}"`);
           processedHtml = processedHtml.replace(fullTag, `${openTag}${appHtml}</${tagName}>`);
         }
       }
@@ -182,14 +193,14 @@ export default function(options = {}) {
           const fileName = path.posix.join(viteConfig.build.assetsDir, `p${hash}e.css`);
           this.emitFile({ type: 'asset', fileName, source: allCss });
           tags.push({ tag: 'link', attrs: { rel: 'stylesheet', href: path.posix.join(viteConfig.base, fileName) }, injectTo: 'head' });
-          headStyleChildren = '' // id only
+          headStyleChildren = '' // id only, no css
         } else {
           headStyleChildren = allCss; // Dev mode: Inject as style tag
         }
       }
 
       // Hybrid?
-      if (/\sdata-client(=|[\s>])/.test(processedHtml)) {
+      if (/\sdata-client(=|[\s>])/.test(html)) {
 
         if (headStyleChildren !== false) {
           tags.push({
