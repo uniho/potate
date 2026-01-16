@@ -16,10 +16,11 @@ export default ({initName, pageRoot}) => `
     const islands = document.querySelectorAll('[data-island][data-client]');
   
     for (const el of islands) {
-      const { island: name, client: mode } = el.dataset;
+      const { island: rawName, client: mode } = el.dataset;
+      const [name, exportName] = (rawName || '').split(':');
       const path = Object.keys(modules).find(p => {
         const noExt = p.replace(/\\.[^/.]+$/, "");
-        return noExt.endsWith(\`\${name}\`);
+        return noExt.endsWith(\`/\${name}\`);
       });
 
       if (!path) {
@@ -28,7 +29,7 @@ export default ({initName, pageRoot}) => `
       }
 
       const mod = await modules[path]();
-      const Component = mod.App || mod.default;
+      const Component = exportName ? mod[exportName] : (mod.App || mod.default);
       const localProps = typeof mod.main === 'function' ? await mod.main() : {};
       const props = { ...globalProps, ...localProps };
 

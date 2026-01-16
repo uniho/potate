@@ -3,7 +3,9 @@
 
 A natural and powerful Zero-Runtime CSS-in-JS solution, seamlessly integrated with Vite.
 
-## 🚀 Why it matters
+## **Server Side Rendering / Static Site Generation Styling (SSR / SSG Only)**
+
+SSR Emotion for Vite は、お気に入りの SSG がない人の新しい選択肢になるかもしれません！
 
 I used to think there wasn't much point in writing static content in JSX components (`.jsx` or `.tsx` files) instead of just using Astro components (`.astro` files). It seemed like standard Astro components were more than enough for most cases, because I thought having frontmatter, the HTML tag section, and the style section was all I ever needed.
 
@@ -81,5 +83,46 @@ export const InteractiveBox = () => {
     </div>
   );
 };
+
+```
+
+## **Client Side Styling (CSR Only)**
+
+"Client Side Styling Only" は普通の Vite で作成する Web App です（よね？）
+普通に emotion が使えます（よね？）
+
+```html
+  <!-- index.html -->
+
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main"></script>
+  </body>
+
+```
+
+```jsx
+// src/main.jsx 
+
+import Potate from 'potatejs'
+import { css } from '@emotion/css'
+
+const App = () => {
+  const [color, setColor] = useState('blue');
+
+  useEffect(() => {
+    setColor('red');
+  }, []);
+
+  return (
+    <div class={css({color})}>
+      Hello, CSR EMOTION! It is Normal, right?
+    </div>
+  );
+};
+
+//
+const root = Potate.createRoot(document.querySelector('#app'))
+root.render(<App/>)
 
 ```

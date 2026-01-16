@@ -173,3 +173,69 @@ const resource = watch.create(listener => {
 })
 
 ```
+
+## Async Generators as an alternative to State Management
+
+A example of [Async Generators as an alternative to State Management](https://medium.com/dailyjs/async-generators-as-an-alternative-to-state-management-f9871390ffca)
+
+``` js
+import { Suspense, watch } from 'potatejs'
+
+// Your human rights (specifically your liberty) are fully guaranteed,
+// including the freedom to name this as you wish — such as a 'signal'.
+const createSignal = (genFunc) => {
+  const promise = Promise.resolve();
+  const listeners = new Set();
+  let it;
+
+  const start = () => {
+    it = genFunc();
+    (async () => {
+      for await (const _ of it) listeners.forEach(l => l());
+    })();
+  };
+
+  promise._watch = {
+    subscribe: l => {
+      if (listeners.size === 0) start();
+      listeners.add(l);
+    },
+    unsubscribe: l => {
+      listeners.delete(l);
+      if (listeners.size === 0 && it?.return) it.return();
+    }
+  };
+  return promise;
+}
+
+const mySignal = createSignal({name: 'jyaga'})
+
+export props => {
+  return (<Suspense><Profile /></Suspense>)
+}
+
+const Profile = props => {
+  watch(resource)
+  const data = mySignal()
+  return (<div>Name: {data.name}</div>)
+}
+
+// パターン1: 1秒ごとにカウントアップする
+const timerStore = watch.create(listener => {
+  let count = 0;
+  const it = (async function* () {
+    while (true) {
+      yield count++;
+      await new Promise(r => setTimeout(r, 1000))
+    }
+  })();
+
+  (async () => {
+    for await (const val of it) listener(val)
+  })()
+
+  return () => it.return()
+})
+
+```
+
