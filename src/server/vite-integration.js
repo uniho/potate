@@ -12,18 +12,11 @@ import { Window } from 'happy-dom';
 
 const pageRoot = 'pages';
 const initName = '_init';
+const appId = 'app';
 
 export default function(options = {}) {
 
   let viteConfig, devServer, runner, nodeServer, runtimeRefId
-
-  // Polyfill for SSR
-  if (!global.window) {
-    const window = new Window();
-    global.window = window;
-    global.document = window.document;
-    global.HTMLElement = window.HTMLElement;
-  }
 
   const RUNTIME_PUBLIC_ID = 'virtual:potate-runtime';
   const RUNTIME_INTERNAL_ID = '\0' + RUNTIME_PUBLIC_ID;
@@ -219,15 +212,13 @@ export default function(options = {}) {
               if (typeof initMod.main === 'function') globalProps = await initMod.main();
             }
 
-            const islands = document.querySelectorAll(\`[data-client="\${clientPath}"]\`);
-            for (const el of islands) {
-              const Component = mod.default || mod.App;
-              const localProps = typeof mod.main === 'function' ? await mod.main() : {};
-              const props = { ...globalProps, ...localProps };
-              const cache = document.createElement('div');
-              render(createElement(Component, props), cache);
-              el.replaceChildren(...Array.from(cache.childNodes));
-            }
+            const container = document.getElementById('${appId}');
+            const Component = mod.default || mod.App || mod.body;
+            const localProps = typeof mod.main === 'function' ? await mod.main() : {};
+            const props = { ...globalProps, ...localProps };
+            const cache = document.createElement('div');
+            render(createElement(Component, props), cache);
+            container.replaceChildren(...Array.from(cache.childNodes));
           }
         `;
       }
@@ -265,52 +256,67 @@ export default function(options = {}) {
 
         return `
           import { renderToString, FUNCTIONAL_COMPONENT_NODE } from '${renderToStringPath}';
+          import { createElement, render } from 'potatejs';
           import * as mod from '/src/${pageRoot}/${cleanName}';
+          import { Window } from 'happy-dom';
           
           ${globalPropsCode}
 
           export const run = async () => {
             const globalProps = await getGlobalProps();
             const pageProps = typeof mod.main === 'function' ? await mod.main() : {};
+            const hydrate = pageProps.hydrate || false;
             const props = { ...globalProps, ...pageProps };
-
-            if (mod.body) {
-              const Layout = mod.body;
+            const Layout = mod.default || mod.App || mod.body;
+            if (Layout) {
               const node = {
                 nodeType: FUNCTIONAL_COMPONENT_NODE,
                 type: Layout,
                 props: { ...props }
               };
-              let html = renderToString(node);
-              let island = null;
-
-              const matches = html.matchAll(/data-client(?:="([^"]*)")?/g);
-              const islands = [];
-
-              for (const match of matches) {
-                let clientRes;
-                const val = match[1];
-                
-                if (!val) {
-                  clientRes = \`/src/${pageRoot}/${cleanName}\`;
-                } else if (val.startsWith('/')) {
-                  clientRes = \`/src/${pageRoot}${val}\`; 
-                } else {
-                  const base = '${dirName}' === '.' ? '' : '${dirName}/';
-                  clientRes = '/src/${pageRoot}/' + base + val;
-                }
-
-                if (!islands.find(is => is.js === clientRes)) {
-                  islands.push({ js: clientRes, client: val || 'load' });
-                }
-                
-                html = html.replace(match[0], \`data-client="${clientRes}"\`);
-              }
-
+              let body = renderToString(node);
               const { extractCritical } = await import('@emotion/server');
-              return { html, ...extractCritical(html), islands };
+
+              const window = new Window();
+              const document = window.document;
+              const clean = (h) => {
+                if (!h) return "";
+                document.body.innerHTML = h;
+                document.body.querySelectorAll('[data-csr-only]').forEach(el => el.remove());
+                return document.body.innerHTML;
+              };
+              body = clean(body);
+              //const head = clean(res.head);
+              const originalWindow = global.window;
+              const originalDocument = global.document;
+              const originalHTMLElement = global.HTMLElement;
+              
+              global.window = window;
+              global.document = document;
+              global.HTMLElement = window.HTMLElement;
+
+              return { body, ...extractCritical(body), hydrate };
+              const container = document.createElement('div');
+              render(createElement(Layout, props), container);
+              
+              container.querySelectorAll('[data-csr-only]').forEach(el => el.remove());
+              const body = container.innerHTML;
+
+              let css = '';
+              const ids = [];
+              document.querySelectorAll('style[data-emotion]').forEach(style => {
+                css += style.innerHTML;
+                const data = style.getAttribute('data-emotion').split(' ');
+                ids.push(...data.slice(1));
+              });
+
+              if (originalWindow) global.window = originalWindow; else delete global.window;
+              if (originalDocument) global.document = originalDocument; else delete global.document;
+              if (originalHTMLElement) global.HTMLElement = originalHTMLElement; else delete global.HTMLElement;
+
+              return { body, css, ids, hydrate };
             }
-            return { html: '', ids: [], css: '', island: null };
+            return { body: '', ids: [], css: '', hydrate: false };
           }
         `;
       }
@@ -318,8 +324,6 @@ export default function(options = {}) {
 
     //
     async transformIndexHtml(html, ctx) {
-      let server = ctx?.server;
-
       // This function will be used in both dev and build
       const ssrRender = async (componentName) => {
         if (devServer) {
@@ -358,13 +362,7 @@ export default function(options = {}) {
         html = html.replace(idMatch[0], '');
       }
 
-      // Mask comments to avoid matching islands inside them
-      const comments = [];
-      let processedHtml = html.replace(/<!--[\s\S]*?-->/g, (m) => {
-        comments.push(m);
-        return `<!--POTATE_COMMENT_${comments.length - 1}-->`;
-      });
-
+      let processedHtml = html;
       let allIds = new Set();
       let allCss = "";
       let clientPath = null;
@@ -398,26 +396,27 @@ export default function(options = {}) {
         if (componentPath) break;
       }
 
-      let activeIsland = [];
+      let hydration = false;
       if (componentPath) {
         console.log(`[potate] Rendering ${ctx.path} -> ${componentPath}`);
 
         const name = componentPath;
-        const { html: appHtml, css, ids, island } = await ssrRender(name);
-        activeIsland = island;
+        const { body: appHtml, css, ids, hydrate } = await ssrRender(name);
+        console.log(css)
+        hydration = hydrate;
 
         ids?.forEach(id => allIds.add(id));
         if (css) allCss += css;
 
-        let bodyContent = appHtml;
-        if (island) {
-          clientPath = island.js;
-          bodyContent = `<div data-island="${name}" data-client="${island.client}">${appHtml}</div>`;
+        let content = appHtml;
+        if (hydrate) content = `<div id="${appId}">${appHtml}</div>`;
+
+        if (/<slot\s*\/>/.test(html)) {
+          processedHtml = html.replace(/<slot\s*\/>/, content);
+        } else {
+          const reBody = new RegExp('(<body[^>]*>)([\\s\\S]*?)(</body>)', 'i');
+          processedHtml = html.replace(reBody, (m, s, c, e) => s + content + e);
         }
-        
-        processedHtml = processedHtml.replace(/(<body[^>]*>)([\s\S]*?)(<\/body>)/i, (match, start, content, end) => {
-          return `${start}${bodyContent}${end}`;
-        });
       }
 
       let headStyleChildren = false;
@@ -435,20 +434,17 @@ export default function(options = {}) {
         }
       }
 
-      // Restore comments
-      processedHtml = processedHtml.replace(/<!--POTATE_COMMENT_(\d+)-->/g, (_, i) => comments[i]);
+      if (headStyleChildren !== false) {
+        tags.push({
+          tag: 'style',
+          attrs: { 'data-emotion': `css ${Array.from(allIds).join(' ')}` },
+          children: headStyleChildren,
+          injectTo: 'head'
+        });
+      }
 
       // Hybrid?
-      if (activeIsland) {
-
-        if (headStyleChildren !== false) {
-          tags.push({
-            tag: 'style',
-            attrs: { 'data-emotion': `css ${Array.from(allIds).join(' ')}` },
-            children: headStyleChildren,
-            injectTo: 'head'
-          });
-        }
+      if (hydration) {
 
         let src;
         if (clientPath) {
