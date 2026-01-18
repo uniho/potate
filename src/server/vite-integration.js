@@ -84,9 +84,6 @@ export default function(options = {}) {
             const virtualPath = path.resolve(root, `${entryName}.html`);
             input[entryName] = virtualPath;
             virtualHtmlMap.add(virtualPath);
-
-            // const sourcePath = filePath.replace(/\\/g, '/');
-            // input[`js/${entryName}`] = `${ENTRY_PUBLIC_ID}:${sourcePath}`;            
           }
         }
       };
@@ -235,7 +232,7 @@ export default function(options = {}) {
       if (id.startsWith(`\0${RUNNER_PUBLIC_ID}:`)) {
         const name = id.substring(`\0${RUNNER_PUBLIC_ID}:`.length);
         const cleanName = name.startsWith('/') ? name.slice(1) : name;
-        const dirName = path.dirname(cleanName).replace(/\\/g, '/');
+        // const dirName = path.dirname(cleanName).replace(/\\/g, '/');
         
         let initImportPath = null;
         const extensions = ['.js', '.ts', '.jsx', '.tsx', '.mjs', '.mts'];
