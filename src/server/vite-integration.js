@@ -43,55 +43,36 @@ export default function(options = {}) {
       const pagesDir = path.resolve(root, `src/${pageRoot}`);
 
       // Only index.html is allowed as a physical HTML file
-      const indexHtml = path.resolve(root, 'index.html');
-      if (!fs.existsSync(indexHtml)) {
-        throw new Error(`[potate] index.html not found in root: ${root}`);
-      }
-      input['index'] = indexHtml;
-      input['runtime'] = RUNTIME_PUBLIC_ID;
+      // const indexHtml = path.resolve(root, 'index.html');
+      // if (!fs.existsSync(indexHtml)) {
+      //   throw new Error(`[potate] index.html not found in root: ${root}`);
+      // }
+      // input['index'] = indexHtml;
+      // input['runtime'] = RUNTIME_PUBLIC_ID;
 
       // Scan src/pages and register virtual HTML (File System Routing)
       const scanPages = (dir, baseRoute = '') => {
         if (!fs.existsSync(dir)) return;
         const files = fs.readdirSync(dir);
         for (const file of files) {
-          const filePath = path.join(dir, file);
-          const stat = fs.statSync(filePath);
+          if (file.startsWith('_')) continue;
+
+          const source = path.join(dir, file);
+          const stat = fs.statSync(source);
           
           if (stat.isDirectory()) {
             // Exclude directories starting with _ (e.g. src/pages/_components)
-            if (file.startsWith('_')) continue;
-            scanPages(filePath, path.join(baseRoute, file));
+            scanPages(source, path.join(baseRoute, file));
           } else if (/\.(jsx|tsx|js|ts)$/.test(file)) {
             const ext = path.extname(file);
             const basename = path.basename(file, ext);
+            const component = path.join(baseRoute, basename).replace(/\\/g, '/'); // Windows support
             
-            // Exclude files like _xxxx.js
-            if (basename.startsWith('_')) continue;
-
-            // Determine route path
-            let routeName = path.join(baseRoute, basename === 'index' ? '' : basename);
-            routeName = routeName.replace(/\\/g, '/'); // Windows support
-            
-            // Entry name (output path in dist: about -> about/index.html)
-            const entryName = `${routeName}/index`;
-
             // Generate virtual HTML file path (end with .html for Vite recognition)
             // Handle with resolveId/load since physical file does not exist
-            let virtualPath;
-            if (!routeName || routeName === '.') {
-              routeName = 'index';
-              virtualPath = path.resolve(root, 'index.html');
-            } else {
-              const entryName = `${routeName}/index`;
-              virtualPath = path.resolve(root, `${entryName}.html`);
-              input[entryName] = virtualPath;
-            }            
-
-            virtualHtmlMap.set(virtualPath, {
-              sourcePath: filePath,
-              routeName             
-            });
+            const virtualPath = path.resolve(root, `${component}.html`);
+            input[component] = virtualPath;
+            virtualHtmlMap.set(virtualPath, {source, component});
           }
         }
       };
@@ -303,12 +284,12 @@ export default function(options = {}) {
         } else {
           // Build mode: Create a temporary, isolated server and runner for each page.
           const serverForRender = await createServer({
-              root: viteConfig.root,
-              configFile: viteConfig.configFile,
-              server: { middlewareMode: true, hmr: false },
-              optimizeDeps: { noDiscovery: true, include: [] },
-              ssr: { noExternal: ['@emotion/css', '@emotion/server', 'potatejs'] },
-              plugins: [potateVite()]
+            root: viteConfig.root,
+            configFile: viteConfig.configFile,
+            server: { middlewareMode: true, hmr: false },
+            optimizeDeps: { noDiscovery: true, include: [] },
+            ssr: { noExternal: ['@emotion/css', '@emotion/server', 'potatejs'] },
+            plugins: [potateVite()]
           });
           try {
             const nodeServerForRender = new ViteNodeServer(serverForRender);
@@ -324,12 +305,8 @@ export default function(options = {}) {
       let processedHtml = html;
       
       const info = virtualHtmlMap.get(htmlPath);
-      const clientPath = '/src/' + path.relative(path.join(viteConfig.root, 'src'), info.sourcePath).replace(/\\/g, '/');
-      const componentPath = info.routeName;
-      console.log(clientPath, componentPath)
-
-      const name = componentPath;
-      const { body: appHtml, css, ids, hydrate } = await ssrRender(name);
+      const clientPath = '/src/' + path.relative(path.join(viteConfig.root, 'src'), info.source).replace(/\\/g, '/');
+      const { body: appHtml, css, ids, hydrate } = await ssrRender(info.component);
 
       let content = appHtml;
 
