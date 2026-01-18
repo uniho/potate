@@ -28,7 +28,7 @@ export default function(options = {}) {
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const renderToStringPath = path.join(__dirname, 'renderToString.js').replace(/\\/g, '/');
 
-  const virtualHtmlMap = new Set();
+  const virtualHtmlMap = new Map();
   const deleteList = new Set();
 
   return {
@@ -73,17 +73,25 @@ export default function(options = {}) {
             let routeName = path.join(baseRoute, basename === 'index' ? '' : basename);
             routeName = routeName.replace(/\\/g, '/'); // Windows support
             
-            // Skip root (index) as it uses the physical file
-            if (!routeName || routeName === '.') continue;
-
             // Entry name (output path in dist: about -> about/index.html)
             const entryName = `${routeName}/index`;
 
             // Generate virtual HTML file path (end with .html for Vite recognition)
             // Handle with resolveId/load since physical file does not exist
-            const virtualPath = path.resolve(root, `${entryName}.html`);
-            input[entryName] = virtualPath;
-            virtualHtmlMap.add(virtualPath);
+            let virtualPath;
+            if (!routeName || routeName === '.') {
+              routeName = 'index';
+              virtualPath = path.resolve(root, 'index.html');
+            } else {
+              const entryName = `${routeName}/index`;
+              virtualPath = path.resolve(root, `${entryName}.html`);
+              input[entryName] = virtualPath;
+            }            
+
+            virtualHtmlMap.set(virtualPath, {
+              sourcePath: filePath,
+              routeName             
+            });
           }
         }
       };
@@ -224,9 +232,7 @@ export default function(options = {}) {
       }
 
       if (virtualHtmlMap.has(id)) {
-        const templatePath = path.resolve(viteConfig.root, 'index.html');
-        const html = fs.readFileSync(templatePath, 'utf-8');
-        return `<!--POTATE_ID:${id}-->\n${html}`;
+        return fs.readFileSync(path.resolve(viteConfig.root, 'index.html'), 'utf-8');
       }
 
       if (id.startsWith(`\0${RUNNER_PUBLIC_ID}:`)) {
@@ -285,6 +291,10 @@ export default function(options = {}) {
 
     //
     async transformIndexHtml(html, ctx) {
+
+      const htmlPath = ctx.filename ? path.resolve(ctx.filename) : null;
+      if (!virtualHtmlMap.has(htmlPath)) return html;
+
       // This function will be used in both dev and build
       const ssrRender = async (componentName) => {
         if (devServer) {
@@ -311,110 +321,65 @@ export default function(options = {}) {
         }
       }
 
-      let virtualId = null;
-      const idMatch = html.match(/<!--POTATE_ID:(.*?)-->/);
-      if (idMatch) {
-        virtualId = idMatch[1];
-        html = html.replace(idMatch[0], '');
-      }
-
       let processedHtml = html;
-      let allIds = new Set();
-      let allCss = "";
-      let clientPath = null;
-
-      // Identify target page component from URL (ctx.path)
-      // e.g. /about/index.html -> src/pages/about.jsx OR src/pages/about/index.jsx
-      let componentPath = null;
-      let urlPath = ctx.path;
       
-      if (virtualId) {
-        const rel = path.relative(viteConfig.root, virtualId).replace(/\\/g, '/');
-        urlPath = '/' + rel;
-      }
+      const info = virtualHtmlMap.get(htmlPath);
+      const clientPath = '/src/' + path.relative(path.join(viteConfig.root, 'src'), info.sourcePath).replace(/\\/g, '/');
+      const componentPath = info.routeName;
+      console.log(clientPath, componentPath)
 
-      urlPath = urlPath.replace(/^\//, '').replace(/index\.html$/, '').replace(/\/$/, '');
-      const pagesDir = path.resolve(viteConfig.root, 'src', pageRoot);
-      
-      const extensions = ['.jsx', '.tsx', '.js', '.ts'];
-      const searchPaths = [
-        path.join(pagesDir, urlPath || 'index'), // /about -> src/pages/about
-        path.join(pagesDir, urlPath, 'index')    // /about -> src/pages/about/index
-      ];
+      const name = componentPath;
+      const { body: appHtml, css, ids, hydrate } = await ssrRender(name);
 
-      for (const basePath of searchPaths) {
-        for (const ext of extensions) {
-          if (fs.existsSync(basePath + ext)) {
-            clientPath = '/src/' + path.relative(path.join(viteConfig.root, 'src'), basePath + ext).replace(/\\/g, '/');
-            componentPath = path.relative(path.join(viteConfig.root, 'src', pageRoot), basePath + ext).replace(/\\/g, '/').replace(/\.[^/.]+$/, "");
-            break;
-          }
-        }
-        if (componentPath) break;
-      }
+      let content = appHtml;
 
-      let hydration = false;
-      if (componentPath) {
-        console.log(`[potate] Rendering ${ctx.path} -> ${componentPath}`);
-
-        const name = componentPath;
-        const { body: appHtml, css, ids, hydrate } = await ssrRender(name);
-
-        hydration = hydrate;
-
-        ids?.forEach(id => allIds.add(id));
-        if (css) allCss += css;
-
-        let content = appHtml;
-
-        // const window = new Window();
-        // const document = window.document;
-        // const clean = (h) => {
-        //   if (!h) return "";
-        //   document.body.innerHTML = h;
-        //   document.body.querySelectorAll('[data-csr-only]').forEach(el => el.remove());
-        //   return document.body.innerHTML;
-        // };
-        // content = clean(content);
-        // //const head = clean(res.head);
+      // const window = new Window();
+      // const document = window.document;
+      // const clean = (h) => {
+      //   if (!h) return "";
+      //   document.body.innerHTML = h;
+      //   document.body.querySelectorAll('[data-csr-only]').forEach(el => el.remove());
+      //   return document.body.innerHTML;
+      // };
+      // content = clean(content);
+      // //const head = clean(res.head);
 
 
-        if (hydrate) content = `<div id="${appId}">${appHtml}</div>`;
+      if (hydrate) content = `<div id="${appId}">${appHtml}</div>`;
 
-        if (/<slot\s*\/>/.test(html)) {
-          processedHtml = html.replace(/<slot\s*\/>/, content);
-        } else {
-          const reBody = new RegExp('(<body[^>]*>)([\\s\\S]*?)(</body>)', 'i');
-          processedHtml = html.replace(reBody, (m, s, c, e) => s + content + e);
-        }
+      if (/<slot\s*\/>/.test(html)) {
+        processedHtml = html.replace(/<slot\s*\/>/, content);
+      } else {
+        const reBody = new RegExp('(<body[^>]*>)([\\s\\S]*?)(</body>)', 'i');
+        processedHtml = html.replace(reBody, (m, s, c, e) => s + content + e);
       }
 
       let headStyleChildren = false;
       const tags = [];
-      if (allCss) {
+      if (css) {
         if (!devServer) {
           // Build mode: Use emitFile to let Vite handle the asset creation
-          const hash = crypto.createHash('md5').update(allCss).digest('hex').slice(0, 8);
+          const hash = crypto.createHash('md5').update(css).digest('hex').slice(0, 8);
           const fileName = path.posix.join(viteConfig.build.assetsDir, `p${hash}e.css`);
-          this.emitFile({ type: 'asset', fileName, source: allCss });
+          this.emitFile({ type: 'asset', fileName, source: css });
           tags.push({ tag: 'link', attrs: { rel: 'stylesheet', href: path.posix.join(viteConfig.base, fileName) }, injectTo: 'head' });
           headStyleChildren = '' // id only, no css
         } else {
-          headStyleChildren = allCss; // Dev mode: Inject as style tag
+          headStyleChildren = css; // Dev mode: Inject as style tag
         }
       }
 
       if (headStyleChildren !== false) {
         tags.push({
           tag: 'style',
-          attrs: { 'data-emotion': `css ${Array.from(allIds).join(' ')}` },
+          attrs: { 'data-emotion': `css ${ids.join(' ')}` },
           children: headStyleChildren,
           injectTo: 'head'
         });
       }
 
       // Hybrid?
-      if (hydration) {
+      if (hydrate) {
         let src;
         if (devServer) {
           src = `/@id/${RUNTIME_PUBLIC_ID}`;
@@ -428,21 +393,16 @@ export default function(options = {}) {
         });        
       } else {
         deleteList.add(clientPath);
-        console.log(clientPath)
       }
 
       return { html: processedHtml, tags };
     },
 
     writeBundle(options, bundle) {
+      // Remove unused JS
       if (viteConfig.command !== 'build' || deleteList.size === 0) return;
-
       const outDir = path.resolve(viteConfig.root, viteConfig.build.outDir);
-
-      // deleteList: 消去したいソースファイルのパス (例: /src/pages/about.jsx)
       deleteList.forEach(sourcePath => {
-        // bundle から「このソースパスを元に作られたJSチャンク」を探し出す
-        // facadeModuleId は Vite が内部で保持するソースファイルの絶対パス
         const targetChunk = Object.values(bundle).find(chunk => 
           chunk.type === 'chunk' && 
           chunk.facadeModuleId && 
@@ -453,10 +413,9 @@ export default function(options = {}) {
           const fullPath = path.join(outDir, targetChunk.fileName);
           if (fs.existsSync(fullPath)) {
             try {
-              // fs.unlinkSync(fullPath);
-              console.log(`[potate] Pruned unused JS: ${fullPath}`);
+              fs.unlinkSync(fullPath);
+              console.log(`[potate] Pruned unused JS: ${path.relative(viteConfig.root, fullPath)}`);
             } catch (e) {
-              // 削除失敗は無視（安全のため）
             }
           }
         }
