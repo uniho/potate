@@ -166,7 +166,7 @@ const MyComponent = props => (
 
 ```
 
-### AWhen you want to make the entire App CSR Only
+### When you want to make the entire App CSR Only
 
 Simply specify the `data-client-only` attribute at the root.
 
