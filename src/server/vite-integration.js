@@ -211,7 +211,6 @@ export default function(options = {}) {
 
       if (id.startsWith(`\0${RUNNER_PUBLIC_ID}:`)) {
         const name = id.substring(`\0${RUNNER_PUBLIC_ID}:`.length);
-        console.log(name)
         const cleanName = name.startsWith('/') ? name.slice(1) : name;
         // const dirName = path.dirname(cleanName).replace(/\\/g, '/');
         
