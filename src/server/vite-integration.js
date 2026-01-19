@@ -8,6 +8,7 @@ import crypto from 'node:crypto';
 import { ViteNodeServer } from 'vite-node/server';
 import { ViteNodeRunner } from 'vite-node/client';
 import { createServer } from 'vite';
+import runtime from './vite-runtime';
 import { Window } from 'happy-dom';
 
 const pageRoot = 'pages';
@@ -31,10 +32,25 @@ export default function(options = {}) {
   const virtualHtmlMap = new Map();
   const deleteList = new Set();
 
+  const csrOnly = options.csrOnly || false;
+
   return {
     name: 'potate',
     enforce: 'pre',
+
     config(userConfig) {
+      const config = {
+        plugins: [potateVite()],
+        resolve: {
+          alias: {
+            'react': 'potatejs',
+            'react-dom': 'potatejs',
+            'react/jsx-runtime': 'potatejs',
+          },
+        },
+      };
+      if (csrOnly) return config;
+
       const projectRoot = process.cwd();
       const root = userConfig.root || projectRoot;
 
@@ -61,15 +77,12 @@ export default function(options = {}) {
           const stat = fs.statSync(source);
           
           if (stat.isDirectory()) {
-            // Exclude directories starting with _ (e.g. src/pages/_components)
             scanPages(source, path.join(baseRoute, file));
           } else if (/\.(jsx|tsx|js|ts)$/.test(file)) {
             const ext = path.extname(file);
             const basename = path.basename(file, ext);
             const component = path.join(baseRoute, basename).replace(/\\/g, '/'); // Windows support
             
-            // Generate virtual HTML file path (end with .html for Vite recognition)
-            // Handle with resolveId/load since physical file does not exist
             const virtualPath = path.resolve(root, `${component}.html`);
             input[component] = virtualPath;
             virtualHtmlMap.set(virtualPath, {source, component});
@@ -77,33 +90,20 @@ export default function(options = {}) {
         }
       };
       
-      // Execute scan only during build when input is not specified
-      if (!userConfig.build?.rollupOptions?.input) {
-        scanPages(pagesDir);
-      }
+      scanPages(pagesDir);
 
-      return {
-        plugins: [potateVite()],
-        resolve: {
-          alias: {
-            'react': 'potatejs',
-            'react-dom': 'potatejs',
-            'react/jsx-runtime': 'potatejs',
-          },
-        },
+      return {...config, ...{
         ssr: { noExternal: ['@emotion/css', '@emotion/server', 'potatejs'] },
         optimizeDeps: { exclude: ['@emotion/css', '@emotion/server', 'potatejs'] },
-        build: {
-          rollupOptions: {
-            input
-          }
-        }
-      };
+        build: { rollupOptions: { input　} },
+      }};
     },
 
     configResolved(config) { viteConfig = config; },
 
     configureServer(server) {
+      if (csrOnly) return;
+
       devServer = server;
       // Create the SSR runner and server once for dev mode and reuse them on every request.
       nodeServer = new ViteNodeServer(server);
@@ -123,43 +123,64 @@ export default function(options = {}) {
         // Handle extension-less paths (e.g. /about)
         if (!path.extname(targetPath)) {
           if (!targetPath.endsWith('/')) {
-             // Check if this is a virtual route
-             const potentialHtml = path.resolve(viteConfig.root, targetPath.slice(1), 'index.html');
-             if (virtualHtmlMap.has(potentialHtml)) {
+            // Check for /about.html
+            const potentialHtmlFile = path.resolve(viteConfig.root, targetPath.slice(1) + '.html');
+            if (virtualHtmlMap.has(potentialHtmlFile)) {
+              targetPath += '.html';
+            } else {
+              // Check if this is a virtual route
+              const potentialHtml = path.resolve(viteConfig.root, targetPath.slice(1), 'index.html');
+              if (virtualHtmlMap.has(potentialHtml)) {
                 // Redirect /about to /about/
                 res.statusCode = 301;
                 res.setHeader('Location', url + '/');
                 res.end();
                 return;
-             }
+              }
+            }
           } else {
-             targetPath += 'index.html';
+            targetPath += 'index.html';
           }
         }
 
         if (targetPath.endsWith('.html')) {
-           const absolutePath = path.resolve(viteConfig.root, targetPath.startsWith('/') ? targetPath.slice(1) : targetPath);
-           
-           if (virtualHtmlMap.has(absolutePath)) {
-             try {
-               const template = fs.readFileSync(path.resolve(viteConfig.root, 'index.html'), 'utf-8');
-               const html = await server.transformIndexHtml(url, template, req.originalUrl);
-               
-               res.statusCode = 200;
-               res.setHeader('Content-Type', 'text/html');
-               res.end(html);
-               return;
-             } catch (e) {
-               return next(e);
-             }
-           }
+          const absolutePath = path.resolve(viteConfig.root, targetPath.startsWith('/') ? targetPath.slice(1) : targetPath);
+          
+          if (virtualHtmlMap.has(absolutePath)) {
+            try {
+              const template = fs.readFileSync(path.resolve(viteConfig.root, 'index.html'), 'utf-8');
+              const html = await server.transformIndexHtml(targetPath, template, req.originalUrl);
+              
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'text/html');
+              res.end(html);
+              return;
+            } catch (e) {
+              return next(e);
+            }
+          }
         }
         
         next();
       });
     },
 
+    configurePreviewServer(server) {
+      if (csrOnly) return;
+      server.middlewares.use((req, res, next) => {
+        const url = req.url?.split('?')[0];
+        if (url && !path.extname(url) && !url.endsWith('/')) {
+          res.statusCode = 301;
+          res.setHeader('Location', url + '/');
+          res.end();
+          return;
+        }
+        next();
+      });
+    },
+    
     buildStart() {
+      if (csrOnly) return;
       if (viteConfig.command === 'build') {
         runtimeRefId = this.emitFile({
           type: 'chunk',
@@ -170,46 +191,18 @@ export default function(options = {}) {
     },
 
     resolveId(id) {
+      if (csrOnly) return;
       if (id === RUNTIME_PUBLIC_ID) return RUNTIME_INTERNAL_ID;
       if (id.startsWith(ENTRY_PUBLIC_ID)) return id;
       if (id.startsWith(`${RUNNER_PUBLIC_ID}:`)) return '\0' + id;
-      if (virtualHtmlMap.has(id)) {
-        return id;
-      }
+      if (virtualHtmlMap.has(id)) return id;
     },
     
     async load(id) {
+      if (csrOnly) return;
+
       if (id === RUNTIME_INTERNAL_ID) {
-        return `
-          import { createElement, render } from 'potatejs';
-          const pages = import.meta.glob('/src/${pageRoot}/**/*.{jsx,tsx,js,ts}');
-          const initModules = import.meta.glob('/src/${initName}.{js,ts}', { eager: true });
-
-          async function start() {
-            console.log(1);
-            const self = document.querySelector('script[data-comp]');
-            const compPath = self?.getAttribute('data-comp');
-            if (!compPath || !pages[compPath]) return;
-
-            const mod = await pages[compPath]();
-            console.log(2);
-
-            let globalProps = {};
-            for (const path in initModules) {
-              const initMod = initModules[path];
-              if (typeof initMod.main === 'function') globalProps = await initMod.main();
-            }
-
-            const container = document.getElementById('${appId}');
-            const Component = mod.default || mod.App || mod.body;
-            const localProps = typeof mod.main === 'function' ? await mod.main() : {};
-            const props = { ...globalProps, ...localProps };
-            const cache = document.createElement('div');
-            render(createElement(Component, props), cache);
-            container.replaceChildren(...Array.from(cache.childNodes));
-          }
-          start();
-        `;
+        return runtime({initName, pageRoot, appId});
       }
 
       if (virtualHtmlMap.has(id)) {
@@ -218,6 +211,7 @@ export default function(options = {}) {
 
       if (id.startsWith(`\0${RUNNER_PUBLIC_ID}:`)) {
         const name = id.substring(`\0${RUNNER_PUBLIC_ID}:`.length);
+        console.log(name)
         const cleanName = name.startsWith('/') ? name.slice(1) : name;
         // const dirName = path.dirname(cleanName).replace(/\\/g, '/');
         
@@ -272,6 +266,7 @@ export default function(options = {}) {
 
     //
     async transformIndexHtml(html, ctx) {
+      if (csrOnly) return html;
 
       const htmlPath = ctx.filename ? path.resolve(ctx.filename) : null;
       if (!virtualHtmlMap.has(htmlPath)) return html;
@@ -310,8 +305,8 @@ export default function(options = {}) {
 
       let content = appHtml;
 
-      // const window = new Window();
-      // const document = window.document;
+      const window = new Window();
+      const document = window.document;
       // const clean = (h) => {
       //   if (!h) return "";
       //   document.body.innerHTML = h;
@@ -321,14 +316,16 @@ export default function(options = {}) {
       // content = clean(content);
       // //const head = clean(res.head);
 
-
       if (hydrate) content = `<div id="${appId}">${appHtml}</div>`;
 
-      if (/<slot\s*\/>/.test(html)) {
-        processedHtml = html.replace(/<slot\s*\/>/, content);
+      document.write(html);
+      const container = document.getElementById(appId);
+      if (container) {
+        container.outerHTML = content;
+        processedHtml = document.documentElement.outerHTML;
       } else {
         const reBody = new RegExp('(<body[^>]*>)([\\s\\S]*?)(</body>)', 'i');
-        processedHtml = html.replace(reBody, (m, s, c, e) => s + content + e);
+        processedHtml = html.replace(reBody, (match, start, inner, end) => `${start}${content}${inner}${end}`);
       }
 
       let headStyleChildren = false;
