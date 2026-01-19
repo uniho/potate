@@ -7,11 +7,14 @@ export default ({initName, pageRoot, appId}) => {
     const initModules = import.meta.glob('/src/${initName}.{js,ts}', { eager: true });
 
     async function start() {
-      const self = document.querySelector('script[data-comp]');
-      const compPath = self?.getAttribute('data-comp');
-      if (!compPath || !pages[compPath]) return;
-
-      const mod = await pages[compPath]();
+      let mod;
+      {
+        const self = document.querySelector('script[data-runtime-props]');
+        const props = JSON.parse(self?.getAttribute('data-runtime-props'));
+        const path = '/src/${pageRoot}/' + props.page;
+        if (!pages[path]) return;
+        mod = await pages[path]();
+      }
 
       let globalProps = {};
       for (const path in initModules) {

@@ -9,6 +9,7 @@ import { ViteNodeServer } from 'vite-node/server';
 import { ViteNodeRunner } from 'vite-node/client';
 import { createServer } from 'vite';
 import runtime from './vite-runtime';
+import render from './vite-render';
 import { Window } from 'happy-dom';
 
 const pageRoot = 'pages';
@@ -32,7 +33,7 @@ export default function(options = {}) {
   const virtualHtmlMap = new Map();
   const deleteList = new Set();
 
-  const csrOnly = options.csrOnly || false;
+  const csrOnly = options.clientOnly || false;
 
   return {
     name: 'potate',
@@ -54,17 +55,8 @@ export default function(options = {}) {
       const projectRoot = process.cwd();
       const root = userConfig.root || projectRoot;
 
-      // MPA support: Check root/index.html and generate virtual HTML entries from components under src/pages
       const input = {};
       const pagesDir = path.resolve(root, `src/${pageRoot}`);
-
-      // Only index.html is allowed as a physical HTML file
-      // const indexHtml = path.resolve(root, 'index.html');
-      // if (!fs.existsSync(indexHtml)) {
-      //   throw new Error(`[potate] index.html not found in root: ${root}`);
-      // }
-      // input['index'] = indexHtml;
-      // input['runtime'] = RUNTIME_PUBLIC_ID;
 
       // Scan src/pages and register virtual HTML (File System Routing)
       const scanPages = (dir, baseRoute = '') => {
@@ -79,13 +71,12 @@ export default function(options = {}) {
           if (stat.isDirectory()) {
             scanPages(source, path.join(baseRoute, file));
           } else if (/\.(jsx|tsx|js|ts)$/.test(file)) {
-            const ext = path.extname(file);
-            const basename = path.basename(file, ext);
-            const component = path.join(baseRoute, basename).replace(/\\/g, '/'); // Windows support
+            const component = path.join(baseRoute, file).replace(/\\/g, '/'); // Windows support
+            const component_no_ext = component.replace(/\.[^.\/]+$/, '');
             
-            const virtualPath = path.resolve(root, `${component}.html`);
-            input[component] = virtualPath;
-            virtualHtmlMap.set(virtualPath, {source, component});
+            const virtualPath = path.resolve(root, `${component_no_ext}.html`);
+            input[component_no_ext] = virtualPath;
+            virtualHtmlMap.set(virtualPath, component);
           }
         }
       };
@@ -211,55 +202,7 @@ export default function(options = {}) {
 
       if (id.startsWith(`\0${RUNNER_PUBLIC_ID}:`)) {
         const name = id.substring(`\0${RUNNER_PUBLIC_ID}:`.length);
-        const cleanName = name.startsWith('/') ? name.slice(1) : name;
-        // const dirName = path.dirname(cleanName).replace(/\\/g, '/');
-        
-        let initImportPath = null;
-        const extensions = ['.js', '.ts', '.jsx', '.tsx', '.mjs', '.mts'];
-        for (const ext of extensions) {
-          if (fs.existsSync(path.join(viteConfig.root, 'src', initName + ext))) {
-            initImportPath = `/src/${initName}` + ext;
-            break;
-          }
-        }
-
-        const globalPropsCode = initImportPath 
-          ? `
-            async function getGlobalProps() {
-              try {
-                const init = await import('${initImportPath}');
-                return (init && typeof init.main === 'function') ? await init.main() : {};
-              } catch (e) { return {}; }
-            }
-          `
-          : `async function getGlobalProps() { return {}; }`;
-
-        return `
-          import { renderToString, FUNCTIONAL_COMPONENT_NODE } from '${renderToStringPath}';
-          import { createElement, render } from 'potatejs';
-          import * as mod from '/src/${pageRoot}/${cleanName}';
-          
-          ${globalPropsCode}
-
-          export const run = async () => {
-            const globalProps = await getGlobalProps();
-            const pageProps = typeof mod.main === 'function' ? await mod.main() : {};
-            const hydrate = pageProps.hydrate || false;
-            const props = { ...globalProps, ...pageProps };
-            const Layout = mod.default || mod.App || mod.body;
-            if (Layout) {
-              const node = {
-                nodeType: FUNCTIONAL_COMPONENT_NODE,
-                type: Layout,
-                props: { ...props }
-              };
-              let body = renderToString(node);
-              const { extractCritical } = await import('@emotion/server');
-              return { body, ...extractCritical(body), hydrate };
-            }
-            return { body: '', ids: [], css: '', hydrate: false };
-          }
-        `;
+        return render({viteConfig, initName, name, renderToStringPath, pageRoot});
       }
     },
 
@@ -296,35 +239,38 @@ export default function(options = {}) {
         }
       }
 
-      let processedHtml = html;
-      
-      const info = virtualHtmlMap.get(htmlPath);
-      const clientPath = '/src/' + path.relative(path.join(viteConfig.root, 'src'), info.source).replace(/\\/g, '/');
-      const { body: appHtml, css, ids, hydrate } = await ssrRender(info.component);
+      const component = virtualHtmlMap.get(htmlPath);
+      const clientPath = `/src/${pageRoot}/${component}`;
+      const { body, head, css, ids, hydrate } = await ssrRender(component);
 
-      let content = appHtml;
+      let newHtml = body;
 
       const window = new Window();
       const document = window.document;
-      // const clean = (h) => {
-      //   if (!h) return "";
-      //   document.body.innerHTML = h;
-      //   document.body.querySelectorAll('[data-csr-only]').forEach(el => el.remove());
-      //   return document.body.innerHTML;
-      // };
-      // content = clean(content);
-      // //const head = clean(res.head);
 
-      if (hydrate) content = `<div id="${appId}">${appHtml}</div>`;
+      const removeSSR = (h) => {
+        if (!h) return "";
+        document.body.innerHTML = h;
+        document.body.querySelectorAll('[data-client-only]').forEach(el => el.remove());
+        return document.body.innerHTML;
+      };
+      newHtml = removeSSR(newHtml);
+
+      if (hydrate) newHtml = `<div id="${appId}">${newHtml}</div>`;
 
       document.write(html);
       const container = document.getElementById(appId);
       if (container) {
-        container.outerHTML = content;
-        processedHtml = document.documentElement.outerHTML;
+        container.outerHTML = newHtml;
+        newHtml = document.documentElement.outerHTML;
       } else {
         const reBody = new RegExp('(<body[^>]*>)([\\s\\S]*?)(</body>)', 'i');
-        processedHtml = html.replace(reBody, (match, start, inner, end) => `${start}${content}${inner}${end}`);
+        newHtml = html.replace(reBody, (match, start, inner, end) => `${start}${newHtml}${inner}${end}`);
+      }
+
+      if (head) {
+        const reHead = new RegExp('(<head[^>]*>)([\\s\\S]*?)(</head>)', 'i');
+        newHtml = newHtml.replace(reHead, (match, start, inner, end) => `${start}${inner}${head}${end}`);
       }
 
       let headStyleChildren = false;
@@ -353,22 +299,20 @@ export default function(options = {}) {
 
       // Hybrid?
       if (hydrate) {
-        let src;
-        if (devServer) {
-          src = `/@id/${RUNTIME_PUBLIC_ID}`;
-        } else {
-          src = path.posix.join(viteConfig.base, this.getFileName(runtimeRefId));
-        }
+        const src = devServer
+          ? `/@id/${RUNTIME_PUBLIC_ID}`
+          : path.posix.join(viteConfig.base, this.getFileName(runtimeRefId))
+        ;
         tags.push({ 
           tag: 'script', 
-          attrs: { type: 'module', src, 'data-comp': clientPath }, 
+          attrs: { type: 'module', src, 'data-runtime-props': JSON.stringify({ page: component }) }, 
           injectTo: 'body' 
         });        
       } else {
         deleteList.add(clientPath);
       }
 
-      return { html: processedHtml, tags };
+      return { html: newHtml, tags };
     },
 
     writeBundle(options, bundle) {
