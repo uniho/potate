@@ -28,7 +28,7 @@ npm install -D react
 #### For Pure Vite
 
 Potate handles all Vite aliases automatically.
-
+For Pure Vite environments, installing `a technical dummy react package for Node.js` is not required.
 
 ### Implementation Example
 
