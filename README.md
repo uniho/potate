@@ -343,6 +343,7 @@ For the above example, the Brahmos output is 685 bytes, compared to 824 bytes fr
 
 * Potate Server Components (PSC)
 * Potate Compiler
+* Async SSR
 * `useSyncExternalStore` hook
 * `useOptimistic` hook
 * Superficial Type Definitions: We do not provide type information solely to satisfy IDE warnings unless it directly impacts runtime execution safety.
