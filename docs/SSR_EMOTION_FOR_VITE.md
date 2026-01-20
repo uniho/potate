@@ -268,3 +268,24 @@ const root = Potate.createRoot(document.querySelector('#app'))
 root.render(<App/>)
 
 ```
+
+## Hey, how to Implement "Islands"?
+
+After reading this far, are you still wondering how to implement Islands? It's simple: Just create as many as you need. There are no restrictions. You can mount independent Potate roots anywhere in your HTML, just like this:
+
+```jsx
+// Mount Island 1
+{
+  const root = Potate.createRoot(document.querySelector('#island1'))
+  root.render(<Island1/>)
+}
+
+// Mount Island 2
+{
+  const root = Potate.createRoot(document.querySelector('#island1'))
+  root.render(<Island2/>)
+}
+
+```
+
+By manually controlling the entry points, you have total freedom over which parts of your page become interactive "Islands" while keeping the rest as pure, static HTML.
