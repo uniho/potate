@@ -40,17 +40,46 @@ The `<div id="app"></div>` part will be replaced via SSR.
 
 Create your site structure under `src/pages`.
 
-Example:
-src/pages/index.jsx
-src/pages/_part.jsx
-src/pages/about.jsx
-src/pages/contents/index.jsx
-src/pages/_lib/util.js
+```
+Project root
+├── index.html
+├── src
+│   └── pages
+│       ├── index.jsx
+│       ├── _index-part.jsx
+│       ├── about.jsx
+│       ├── contents
+│       │   └── index.jsx
+│       └── _lib
+│           └── util.js
+├── public
+├── dist
+├── node_modules
+:
+:
+
+```
 
 Files or directories starting with `_` will not be processed as page sources.
 
 > **Note:** Of course, you can use `.tsx`, `.js`, or `.ts` extensions as well.
 
+The output will be structured as follows:
+```
+Project root
+:
+:
+├── dist
+│   ├── index.html
+│   ├── about.html
+│   ├── contents
+│   │    └── index.html
+│   └── assets
+│       └── runtime-xxxxx.js ...
+:
+:
+
+```
 
 ### JSX
 
