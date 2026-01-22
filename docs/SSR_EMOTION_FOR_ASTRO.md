@@ -183,18 +183,17 @@ If you prefer the Styled Components pattern (popularized by libraries like MUI o
 Even with this minimal custom (but powerful) function, the result remains the same: Zero-Runtime CSS. All styles are pre-calculated during SSR and extracted into static CSS files.
 
 ```jsx
-import {css, keyframes, injectGlobal, cx} from '@emotion/css'
+import {css, cx} from '@emotion/css'
 
-export const styled = (Tag, options) => (style, ...values) => props => {
+export const styled = (Tag) => (style, ...values) => props => {
   const makeClassName = (style, ...values) =>
     typeof style == 'function' ? makeClassName(style(props)) : css(style, ...values);
  
   const {sx, 'class': _class, children, ...wosx} = props;
 
+  // cleanup transient props
   Object.keys(wosx).forEach(key => {
-    if (options && options.shouldForwardProp && !options.shouldForwardProp(key)) {
-      delete wosx[key];
-    }
+    if (key.startsWith('$')) delete wosx[key];
   });
 
   const newProps = {
@@ -207,6 +206,95 @@ export const styled = (Tag, options) => (style, ...values) => props => {
 
 ```
 
-> **Note:** What is the sx prop? For those unfamiliar with libraries like [MUI, the sx prop](https://mui.com/system/getting-started/the-sx-prop/) is a popular pattern that allows you to apply "one-off" styles directly to a component.
->
-> In this implementation, you can pass raw style objects to the sx prop without wrapping them in `css()` or "The Patterns" functions (whether that's actually convenient or not is another story 🤤).
+What is the sx prop? For those unfamiliar with libraries like [MUI, the sx prop](https://mui.com/system/getting-started/the-sx-prop/) is a popular pattern that allows you to apply "one-off" styles directly to a component.
+
+In this implementation, you can pass raw style objects to the sx prop without wrapping them in `css()` or "The Patterns" functions.
+
+However, since the underlying tag of a button is not always `<button>`, and because using something like `createElement()` locally is generally not recommended, I personally prefer the approach shown below. In any case, how you choose to implement this is entirely up to you.
+
+```js
+// the-sx-prop.js
+
+import {css, cx} from '@emotion/css'
+
+const sx = (props, ...styles) => {
+  const result = typeof props === 'object' ? {...props} : {};
+  const _css = [];
+  for (let arg of styles) {
+    if (typeof arg === 'function') {
+      _css.push(arg(result));
+    } else if (arg) {
+      _css.push(arg);
+    }
+  }
+
+  result.class = cx(css(_css), result.class);
+
+  // cleanup transient props
+  Object.keys(result).forEach(key => {
+    if (key.startsWith('$')) delete result[key];
+  });
+
+  return result;
+}
+
+export default sx;
+
+// Factory for component-scoped sx functions
+sx._factory = (genCSS) => {
+  const f = (props, ...styles) => sx(props, ...styles, genCSS);
+  f.css = (...styles) => f({}, ...styles); // Styles-only function when you don't need props
+  return f;
+}
+
+// My button style
+sx.button = sx._factory(props => {
+  const style = {
+    // default is text button
+    padding: '8px 16px',
+    border: 'none',
+    borderRadius: '2px',
+    color: 'var(--style-palette-primary)',
+    backgroundColor: 'inherit',
+    boxShadow: 'none',
+  };
+
+  if (props.$elevated) {
+    style.borderRadius = '0';
+    style.border = 'none';
+    style.color = 'var(--style-palette-primary)';
+    style.backgroundColor = 'var(--style-palette-surface-container-low)';
+    style.boxShadow = 'var(--style-shadows-level1)';
+  }
+
+  return [
+    css`
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      &:not(:disabled) {
+        cursor: pointer;
+      }
+    `,
+    style,
+  ];
+});
+
+```
+
+```jsx
+import sx from './the-sx-prop'
+
+export default props => {
+  return (<>
+  <button {...sx.button({}, {margin: '1rem'})}>Buuton1</button>
+  <button {...sx.button.css({margin: '1rem'})}>Buuton1</button>
+  <button {...sx.button({$elevated: true}, {margin: '1rem'})}>Button2</button>
+  <div {...sx.button({$elevated: true}, {margin: '1rem'})}>Button3</div>
+  <button disabled {...sx.button.css({margin: '1rem'})}>Button4</button>
+  <button {...sx.button({disabled: true}, {margin: '1rem'})}>Button5</button>
+  </>);
+}
+
+```
