@@ -23,9 +23,11 @@ In Potate, you don't need to learn any special properties or complex setups. It 
 While you can use [`css()`](https://emotion.sh/docs/@emotion/css) directly, you can also create reusable functions like `flexCol()` (which we call **"The Patterns"**).
 
 ```jsx
+// src/components/StaticBox.jsx
+
 import { css } from '@emotion/css'
 
-export const MyComponent = () => (
+export default props => (
   <div class={flexCol({ 
     color: 'hotpink',
     '&:hover': { color: 'deeppink' }
@@ -62,7 +64,7 @@ You can easily change styles when the component "wakes up" in the browser:
 ```jsx
 // src/components/InteractiveBox.jsx
 
-export const InteractiveBox = () => {
+export default props => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
