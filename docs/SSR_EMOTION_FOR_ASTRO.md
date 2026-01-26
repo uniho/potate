@@ -45,7 +45,7 @@ const flexCol = (...args) => css({
 
 ## 🌗 Hybrid Styling (SSR + CSR)
 
-In Potate, Island components (`client:*`) get the best of both worlds.
+In Potate, Island components (`client:load` and others) get the best of both worlds.
 
 ### How it works
 
