@@ -131,7 +131,9 @@ const linkOverlay = (...args) => css({
   },
 }, ...args)
 
-export default props => (
+:
+
+const MyComponent = props => (
   // The parent must have position: relative
   <div class={css({ position: 'relative', border: '1px solid #ccc', padding: '1rem' })}>
     <img src="https://via.placeholder.com/150" alt="placeholder" />
@@ -161,7 +163,9 @@ const gt = (bp, ...args) => css({[`@media ${_gt(bp)}`]: css(...args)})
 const lt = (bp, ...args) => css({[`@media ${_lt(bp)}`]: css(...args)})
 const bw = (min, max, ...args) => css({[`@media ${_gt(min)} and ${_lt(max)}`]: css(...args)})
 
-export default props => (
+:
+
+const MyComponent = props => (
   <div class={css(
     { color: 'black' }, // default css
     bw('sm', '75rem', { color: 'blue' }), // between
