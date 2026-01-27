@@ -23,6 +23,11 @@ export default function potate() {
               },
             },
             ssr: {
+              // By specifying the regex /.*/, all libraries within node_modules 
+              // are forced to be bundled by Vite (noExternal).
+              // This ensures that any 'react' imports within third-party libraries 
+              // are correctly redirected to 'potatejs' via the defined alias.
+              noExternal: [/.*/],
               external: ['@emotion/css', '@emotion/server']
             },
             optimizeDeps: {
