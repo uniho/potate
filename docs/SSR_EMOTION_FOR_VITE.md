@@ -289,3 +289,8 @@ After reading this far, are you still wondering how to implement Islands? It's s
 ```
 
 By manually controlling the entry points, you have total freedom over which parts of your page become interactive "Islands" while keeping the rest as pure, static HTML.
+
+
+## 📖 Other Key Information
+
+We recommend also reviewing [the SSR EMOTION for Astro documentation](/docs/SSR_EMOTION_FOR_ASTRO.md) for critical shared information regarding **Handling Asynchronous Logic**, **The Patterns**, **Advanced**, and other topics.

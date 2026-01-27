@@ -108,6 +108,50 @@ import InteractiveBox from '../components/InteractiveBox';
 * **Zero Learning Curve:** If you know how to use useEffect and Emotion, you already know how to build dynamic Islands with Potate.
 
 
+## 🚦 Handling Asynchronous Logic (SSR vs. CSR)
+
+Since this plugin uses synchronous `renderToString`, you cannot `throw Promise` (Suspense) during the server-side rendering phase.
+
+If your component includes asynchronous logic (like `use()` or data fetching), use the Vite-standard `import.meta.env.SSR` flag to branch your code. This ensures the server-side render stays synchronous while the browser handles the dynamic parts.
+
+### Example: SSR-Safe Data Loading
+
+```jsx
+import React from 'react'
+import { css } from '@emotion/css'
+
+export default props => {
+  
+  // Return a skeleton or null during SSR to avoid suspending
+  if (import.meta.env.SSR) {
+    return (
+      <div className={css({ background: '#eee', height: '100px' })}>
+        Loading...
+      </div>
+    )
+  }
+
+  // Client-side only: use the full power of asynchronous resources
+  const data = React.use(myAsyncResource); 
+
+  return (
+    <div className={css({ background: 'white' })}>
+      {data.message}
+    </div>
+  )
+}
+
+```
+
+### Why use `import.meta.env.SSR` ?
+
+* **Zero Overhead:** Vite automatically removes the "server-only" or "client-only" code blocks during the build process (Dead Code Elimination).
+
+* **Standard Way:** Since it's a built-in Vite feature (and Astro uses Vite), you don't need any special utility functions.
+
+* **Predictable Styling:** It guarantees that your Emotion styles are extracted correctly without being interrupted by pending Promises.
+
+
 ## 🛠 The Patterns 
 
 In Potate, we refer to reusable CSS logic as "The Patterns".
