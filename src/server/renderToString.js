@@ -101,7 +101,7 @@ function renderNode(node) {
 
       if (setCurrentComponentFiber && functionalComponentInstance) {
         const nodeInstance = functionalComponentInstance(Component);
-        const dummyFiber = { nodeInstance, root: { updateType: 'sync' } };
+        const dummyFiber = { nodeInstance, root: { updateType: 'sync' }, context: {} };
         setCurrentComponentFiber(dummyFiber);
         try {
           child = Component(props);
