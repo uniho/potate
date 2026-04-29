@@ -5,8 +5,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
-import { ViteNodeServer } from 'vite-node/server';
-import { ViteNodeRunner } from 'vite-node/client';
 import { createServer } from 'vite';
 import runtime from './vite-runtime';
 import render from './vite-render';
@@ -19,7 +17,10 @@ const SSR_OUTLET = '<!--ssr-outlet-->';
 
 export default function(options = {}) {
 
-  let viteConfig, devServer, runner, nodeServer, runtimeRefId
+  let viteConfig, devServer, runtimeRefId;
+
+  // Cache the Vite server instance used for SSR during the build process
+  let buildRenderServer = null;
 
   const RUNTIME_PUBLIC_ID = 'virtual:potate-runtime';
   const RUNTIME_INTERNAL_ID = '\0' + RUNTIME_PUBLIC_ID;
@@ -97,13 +98,6 @@ export default function(options = {}) {
       if (csrOnly) return;
 
       devServer = server;
-      // Create the SSR runner and server once for dev mode and reuse them on every request.
-      nodeServer = new ViteNodeServer(server);
-      runner = new ViteNodeRunner({
-        root: server.config.root,
-        fetchModule: id => nodeServer.fetchModule(id),
-        resolveId: (id, importer) => nodeServer.resolveId(id, importer),
-      });
 
       // Middleware to serve virtual HTML files in development mode
       server.middlewares.use(async (req, res, next) => {
@@ -216,26 +210,30 @@ export default function(options = {}) {
 
       // This function will be used in both dev and build
       const ssrRender = async (componentName) => {
+        const runnerId = `${RUNNER_PUBLIC_ID}:${componentName}`;
         if (devServer) {
-          const mod = await runner.executeId(`${RUNNER_PUBLIC_ID}:${componentName}`);
+          // Use Vite's built-in SSR module loader in development
+          const mod = await devServer.ssrLoadModule(runnerId);
           return await mod.run();
         } else {
-          // Build mode: Create a temporary, isolated server and runner for each page.
-          const serverForRender = await createServer({
-            root: viteConfig.root,
-            configFile: viteConfig.configFile,
-            server: { middlewareMode: true, hmr: false },
-            optimizeDeps: { noDiscovery: true, include: [] },
-            ssr: { noExternal: ['@emotion/css', '@emotion/server', 'potatejs'] },
-            plugins: [potateVite()]
-          });
+          // Build mode: Reuse a single, isolated server instance for all pages to improve performance.
+          if (!buildRenderServer) {
+            buildRenderServer = await createServer({
+              root: viteConfig.root,
+              configFile: viteConfig.configFile,
+              server: { middlewareMode: true, hmr: false },
+              optimizeDeps: { noDiscovery: true, include: [] },
+              ssr: { noExternal: ['@emotion/css', '@emotion/server', 'potatejs'] },
+              plugins: [potateVite()]
+            });
+          }
           try {
-            const nodeServerForRender = new ViteNodeServer(serverForRender);
-            const nodeRunnerForRender = new ViteNodeRunner({ root: serverForRender.config.root, fetchModule: id => nodeServerForRender.fetchModule(id), resolveId: (id, importer) => nodeServerForRender.resolveId(id, importer) });
-            const mod = await nodeRunnerForRender.executeId(`${RUNNER_PUBLIC_ID}:${componentName}`);
+            // Use the cached build server's SSR module loader
+            const mod = await buildRenderServer.ssrLoadModule(runnerId);
             return await mod.run();
-          } finally {
-            await serverForRender.close();
+          } catch (e) {
+            console.error(`[potate] SSR Render Error [${componentName}]:`, e);
+            throw e;
           }
         }
       }
@@ -317,9 +315,6 @@ export default function(options = {}) {
 
     handleHotUpdate({ file, server, modules }) {
       if (csrOnly) return;
-      if (runner) {
-        runner.moduleCache.clear();
-      }
     },
 
     writeBundle(options, bundle) {
@@ -345,6 +340,14 @@ export default function(options = {}) {
         }
       });
     },
+
+    async closeBundle() {
+      // Ensure the SSR build server is properly closed after the build process
+      if (buildRenderServer) {
+        await buildRenderServer.close();
+        buildRenderServer = null;
+      }
+    }
 
   }
 }
