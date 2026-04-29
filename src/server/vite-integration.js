@@ -15,6 +15,7 @@ import { Window } from 'happy-dom';
 const pageRoot = 'pages';
 const initName = '_init';
 const appId = 'app';
+const SSR_OUTLET = '<!--ssr-outlet-->';
 
 export default function(options = {}) {
 
@@ -242,30 +243,29 @@ export default function(options = {}) {
       const component = virtualHtmlMap.get(htmlPath);
       const clientPath = `/src/${pageRoot}/${component}`;
       const { body, head, css, ids, hydrate } = await ssrRender(component);
-
-      let newHtml = body;
-
-      const window = new Window();
-      const document = window.document;
-
+      
+      // Clean SSR content by removing elements marked as client-only
       const removeSSR = (h) => {
         if (!h) return "";
-        document.body.innerHTML = h;
-        document.body.querySelectorAll('[data-client-only]').forEach(el => el.remove());
-        return document.body.innerHTML;
+        const window = new Window();
+        const doc = window.document;
+        doc.body.innerHTML = h;
+        doc.body.querySelectorAll('[data-client-only]').forEach(el => el.remove());
+        return doc.body.innerHTML;
       };
-      newHtml = removeSSR(newHtml);
 
-      if (hydrate) newHtml = `<div id="${appId}">${newHtml}</div>`;
+      const bodyContent = removeSSR(body);
 
-      document.write(html);
-      const container = document.getElementById(appId);
-      if (container) {
-        container.outerHTML = newHtml;
-        newHtml = document.documentElement.outerHTML;
+      let newHtml = html;
+      // If the template contains the placeholder, replace it with the rendered content directly.
+      // We assume the user has provided the necessary container (e.g., <div id="app">).
+      if (newHtml.includes(SSR_OUTLET)) {
+        newHtml = newHtml.replace(SSR_OUTLET, bodyContent);
       } else {
+        // Fallback: wrap the content and inject it into the body if no placeholder is found.
+        const ssrContent = hydrate ? `<div id="${appId}">${bodyContent}</div>` : bodyContent;
         const reBody = new RegExp('(<body[^>]*>)([\\s\\S]*?)(</body>)', 'i');
-        newHtml = html.replace(reBody, (match, start, inner, end) => `${start}${newHtml}${inner}${end}`);
+        newHtml = html.replace(reBody, (match, start, inner, end) => `${start}${ssrContent}${inner}${end}`);
       }
 
       if (head) {
